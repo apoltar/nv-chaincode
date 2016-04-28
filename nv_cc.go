@@ -238,13 +238,14 @@ func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args 
 
 	if len(args) != 2 { return nil, errors.New("Incorrect number of arguments passed") }
 
-	if args[0] != "getFIDetails" && args[0] != "getTxs" && args[0] != "getNVAccounts"{
+	if args[0] != "getFIDetails" && args[0] != "getTxs" && args[0] != "getNVAccounts"&& args[0] != "getUserAccount"{
 		return nil, errors.New("Invalid query function name.")
 	}
 
 	if args[0] == "getFIDetails" { return t.getFinInstDetails(stub, args[1]) }
 	if args[0] == "getNVAccounts" { return t.getNVAccounts(stub, args[1]) }
 	if args[0] == "getTxs" { return t.getTxs(stub, args[1]) }
+	if args[0] == "getUserAccount" { return t.getUserAccount(stub, args[1]) }
 
 	return nil, nil										
 }
@@ -315,9 +316,6 @@ func (t *SimpleChaincode) getUserAccount(stub *shim.ChaincodeStub, userName stri
 	fmt.Println("Start getUserAccount")
 	fmt.Println("Looking for " + userName);
 
-
-	
-	
 	//get the User index
 	fdAsBytes, err := stub.GetState(userName)
 	if err != nil {
