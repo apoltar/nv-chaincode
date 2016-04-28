@@ -135,7 +135,7 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	
 		//***************************************************************
 	// Get Receiver account from BC
-	rfidBytes, err := stub.GetState("Natalie")
+	rfidBytes, err := stub.GetState("natalie")
 	if err != nil {
 		return nil, errors.New("SubmitTx Failed to get User from BC")
 	}
@@ -147,7 +147,7 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	//Commit Receiver to ledger
 	fmt.Println("SubmitTx Commit Updated Sender To Ledger");
 	txsAsBytes, _ := json.Marshal(receiver)
-	err = stub.PutState("Natalie", txsAsBytes)	
+	err = stub.PutState("natalie", txsAsBytes)	
 	if err != nil {
 		return nil, err
 	}
@@ -301,7 +301,7 @@ func (t *SimpleChaincode) getNVAccounts(stub *shim.ChaincodeStub, finInst string
 	
 	
 	//get the User index
-	fdAsBytes, err := stub.GetState("Natalie")
+	fdAsBytes, err := stub.GetState("natalie")
 	if err != nil {
 		return nil, errors.New("Failed to get Financial Institution")
 	}
@@ -464,6 +464,41 @@ func (t *SimpleChaincode) submitTx(stub *shim.ChaincodeStub, args []string) ([]b
 		return nil, err
 	}
 	
+	
+	return nil, nil
+	//***********************************************************************
+}
+
+
+// ============================================================================================================================
+func (t *SimpleChaincode) updateUserAccount(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+
+	fmt.Println("Running updateUserAccount")
+	
+
+	userName := args[0]
+	amountValue, err := strconv.ParseFloat(args[1], 64)
+
+	
+	//***************************************************************
+	// Get Receiver account from BC
+	rfidBytes, err := stub.GetState(userName)
+	if err != nil {
+		return nil, errors.New("updateUserAccount Failed to get User from BC")
+	}
+	var receiver User
+	fmt.Println("SubmitTx Unmarshalling User Struct");
+	err = json.Unmarshal(rfidBytes, &receiver)
+	receiver.Balance = receiver.Balance  + amountValue
+	
+	//Commit Receiver to ledger
+	fmt.Println("SubmitTx Commit Updated Sender To Ledger");
+	txsAsBytes, _ := json.Marshal(receiver)
+	err = stub.PutState(userName, txsAsBytes)	
+	if err != nil {
+		return nil, err
+	}
+
 	
 	return nil, nil
 	//***********************************************************************
