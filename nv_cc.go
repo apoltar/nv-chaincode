@@ -244,8 +244,11 @@ func (t *SimpleChaincode) Run(stub *shim.ChaincodeStub, function string, args []
 	if function == "init" {													//initialize the chaincode state
 		return t.init(stub, args)
 	} else if function == "submitTx" {											//create a transaction
-		return t.submitTx(stub, args)
+		return t.submitTx(stub, args) 
+	} else if function == "updateUserAccount" {											//create a transaction
+		return t.updateUserAccount(stub, args)
 	} 
+	
 	fmt.Println("run did not find func: " + function)						//error
 
 	return nil, errors.New("Received unknown function invocation")
