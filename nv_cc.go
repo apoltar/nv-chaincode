@@ -23,7 +23,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-
 	"github.com/openblockchain/obc-peer/openchain/chaincode/shim"
 )
 
@@ -307,6 +306,25 @@ func (t *SimpleChaincode) getNVAccounts(stub *shim.ChaincodeStub, finInst string
 	resAsBytes, _ := json.Marshal(res)
 
 	return resAsBytes, nil
+	
+}
+
+// ============================================================================================================================
+func (t *SimpleChaincode) getUserAccount(stub *shim.ChaincodeStub, userName string)([]byte, error){
+	
+	fmt.Println("Start getUserAccount")
+	fmt.Println("Looking for " + userName);
+
+
+	
+	
+	//get the User index
+	fdAsBytes, err := stub.GetState(userName)
+	if err != nil {
+		return nil, errors.New("Failed to get user account from blockchain")
+	}
+
+	return fdAsBytes, nil
 	
 }
 
