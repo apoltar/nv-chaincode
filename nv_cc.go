@@ -99,7 +99,7 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 
 	// Natalie
 	var natalie User
-	natalie.Name = "Natalie"
+	natalie.Name = "natalie"
 	natalie.Balance = 1000
 	natalie.Status  = "Platinum"
 	natalie.Expiration = "June"
@@ -109,9 +109,29 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	jsonAsBytes, _ := json.Marshal(natalie)
 	err = stub.PutState(natalie.Name, jsonAsBytes)								
 	if err != nil {
-		fmt.Println("Error Creating initial user account")
+		fmt.Println("Error Creating Natalie user account")
 		return nil, err
 	}
+	
+	
+	
+	
+		// Anthony
+	var anthony User
+	anthony.Name = "anthony"
+	anthony.Balance = 500
+	anthony.Status  = "Silver"
+	anthony.Expiration = "March"
+	anthony.Join  = "September"
+	anthony.Modified = "Yesterday"
+	
+	jsonAsBytes, _ = json.Marshal(anthony)
+	err = stub.PutState(anthony.Name, jsonAsBytes)								
+	if err != nil {
+		fmt.Println("Error Creating Anthony user account")
+		return nil, err
+	}
+	
 	
 		//***************************************************************
 	// Get Receiver account from BC
