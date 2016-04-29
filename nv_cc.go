@@ -482,13 +482,13 @@ func (t *SimpleChaincode) updateUserAccount(stub *shim.ChaincodeStub, args []str
 	fmt.Println("Running updateUserAccount")
 	
 
-	userName := args[0]
+	userId := args[0]
 	amountValue, err := strconv.ParseFloat(args[1], 64)
 
 	
 	//***************************************************************
 	// Get Receiver account from BC
-	rfidBytes, err := stub.GetState(userName)
+	rfidBytes, err := stub.GetState(userId)
 	if err != nil {
 		return nil, errors.New("updateUserAccount Failed to get User from BC")
 	}
@@ -500,7 +500,7 @@ func (t *SimpleChaincode) updateUserAccount(stub *shim.ChaincodeStub, args []str
 	//Commit Receiver to ledger
 	fmt.Println("SubmitTx Commit Updated Sender To Ledger");
 	txsAsBytes, _ := json.Marshal(receiver)
-	err = stub.PutState(userName, txsAsBytes)	
+	err = stub.PutState(userId, txsAsBytes)	
 	if err != nil {
 		return nil, err
 	}
