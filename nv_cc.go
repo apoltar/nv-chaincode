@@ -72,10 +72,10 @@ type User struct {
 	UserId		string   `json:"UserId"`
 	Name   		string   `json:"Name"`
 	Balance 	float64  `json:"Balance"`
-	Status      string 	 `json:"status"`
-	Expiration  string   `json:"expiration"`
-	Join		string   `json:"join"`
-	Modified	string   `json:"from"`
+	Status      string 	 `json:"Status"`
+	Expiration  string   `json:"ExpirationDate"`
+	Join		string   `json:"JoinDate"`
+	Modified	string   `json:"LastModifiedDate"`
 }
 
 type AllTransactions struct{
@@ -104,9 +104,9 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	natalie.Name = "Natalie"
 	natalie.Balance = 1000
 	natalie.Status  = "Platinum"
-	natalie.Expiration = "June"
-	natalie.Join  = "January"
-	natalie.Modified = "Today"
+	natalie.Expiration = "2017-06-01"
+	natalie.Join  = "2015-05-31"
+	natalie.Modified = "2016-05-06"
 	
 	jsonAsBytes, _ := json.Marshal(natalie)
 	err = stub.PutState(natalie.UserId, jsonAsBytes)								
@@ -124,9 +124,9 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	anthony.Name = "Anthony"
 	anthony.Balance = 500
 	anthony.Status  = "Silver"
-	anthony.Expiration = "March"
-	anthony.Join  = "September"
-	anthony.Modified = "Yesterday"
+	anthony.Expiration = "2017-03-15"
+	anthony.Join  = "2015-08-15"
+	anthony.Modified = "2016-04-17"
 	
 	jsonAsBytes, _ = json.Marshal(anthony)
 	err = stub.PutState(anthony.UserId, jsonAsBytes)								
