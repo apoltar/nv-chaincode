@@ -69,6 +69,7 @@ type Transaction struct {
 
 
 type User struct {
+	UserId		string   `json:"UserId"`
 	Name   		string   `json:"Name"`
 	Balance 	float64  `json:"Balance"`
 	Status      string 	 `json:"status"`
@@ -99,7 +100,8 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 
 	// Natalie
 	var natalie User
-	natalie.Name = "natalie"
+	natalie.UserId = "1";
+	natalie.Name = "Natalie"
 	natalie.Balance = 1000
 	natalie.Status  = "Platinum"
 	natalie.Expiration = "June"
@@ -107,7 +109,7 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	natalie.Modified = "Today"
 	
 	jsonAsBytes, _ := json.Marshal(natalie)
-	err = stub.PutState(natalie.Name, jsonAsBytes)								
+	err = stub.PutState(natalie.UserId, jsonAsBytes)								
 	if err != nil {
 		fmt.Println("Error Creating Natalie user account")
 		return nil, err
@@ -118,7 +120,8 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	
 		// Anthony
 	var anthony User
-	anthony.Name = "anthony"
+	anthony.UserId = "1";
+	anthony.Name = "Anthony"
 	anthony.Balance = 500
 	anthony.Status  = "Silver"
 	anthony.Expiration = "March"
@@ -126,7 +129,7 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	anthony.Modified = "Yesterday"
 	
 	jsonAsBytes, _ = json.Marshal(anthony)
-	err = stub.PutState(anthony.Name, jsonAsBytes)								
+	err = stub.PutState(anthony.UserId, jsonAsBytes)								
 	if err != nil {
 		fmt.Println("Error Creating Anthony user account")
 		return nil, err
@@ -135,7 +138,7 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	
 		//***************************************************************
 	// Get Receiver account from BC
-	rfidBytes, err := stub.GetState("natalie")
+	rfidBytes, err := stub.GetState(natalie.UserId)
 	if err != nil {
 		return nil, errors.New("SubmitTx Failed to get User from BC")
 	}
@@ -304,7 +307,7 @@ func (t *SimpleChaincode) getNVAccounts(stub *shim.ChaincodeStub, finInst string
 	
 	
 	//get the User index
-	fdAsBytes, err := stub.GetState("natalie")
+	fdAsBytes, err := stub.GetState("1")
 	if err != nil {
 		return nil, errors.New("Failed to get Financial Institution")
 	}
@@ -334,13 +337,13 @@ func (t *SimpleChaincode) getNVAccounts(stub *shim.ChaincodeStub, finInst string
 }
 
 // ============================================================================================================================
-func (t *SimpleChaincode) getUserAccount(stub *shim.ChaincodeStub, userName string)([]byte, error){
+func (t *SimpleChaincode) getUserAccount(stub *shim.ChaincodeStub, userId string)([]byte, error){
 	
 	fmt.Println("Start getUserAccount")
-	fmt.Println("Looking for " + userName);
+	fmt.Println("Looking for user with ID " + userId);
 
 	//get the User index
-	fdAsBytes, err := stub.GetState(userName)
+	fdAsBytes, err := stub.GetState(userId)
 	if err != nil {
 		return nil, errors.New("Failed to get user account from blockchain")
 	}
