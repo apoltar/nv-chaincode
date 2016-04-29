@@ -120,7 +120,7 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	
 		// Anthony
 	var anthony User
-	anthony.UserId = "1";
+	anthony.UserId = "2";
 	anthony.Name = "Anthony"
 	anthony.Balance = 500
 	anthony.Status  = "Silver"
