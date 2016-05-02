@@ -135,30 +135,6 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 		return nil, err
 	}
 	
-	
-		//***************************************************************
-	// Get Receiver account from BC
-	rfidBytes, err := stub.GetState(natalie.UserId)
-	if err != nil {
-		return nil, errors.New("SubmitTx Failed to get User from BC")
-	}
-	var receiver User
-	fmt.Println("SubmitTx Unmarshalling User Struct");
-	err = json.Unmarshal(rfidBytes, &receiver)
-	receiver.Balance = receiver.Balance  + 500
-	
-	//Commit Receiver to ledger
-	fmt.Println("SubmitTx Commit Updated Sender To Ledger");
-	txsAsBytes, _ := json.Marshal(receiver)
-	err = stub.PutState("natalie", txsAsBytes)	
-	if err != nil {
-		return nil, err
-	}
-	
-	//***********************************************************************
-	
-	
-	
 	//BANK A
 	var fid FinancialInst
 	fid.Owner = BANKA
@@ -181,56 +157,6 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 		return nil, err
 	}
 
-	// BANK B
-	var fid2 FinancialInst
-	fid2.Owner = BANKB
-
-	var actBA Account
-	actBA.Holder = BANKA
-	actBA.Currency = "AUD"
-	actBA.CashBalance = actAB.CashBalance * USDAUD
-	fid2.Accounts = append(fid2.Accounts, actBA)
-	var actBC Account
-	actBC.Holder = BANKC
-	actBC.Currency = "AUD"
-	actBC.CashBalance = 300000
-	fid2.Accounts = append(fid2.Accounts, actBC)
-
-	jsonAsBytes, _ = json.Marshal(fid2)
-	err = stub.PutState("BANKB", jsonAsBytes)								
-	if err != nil {
-		fmt.Println("Error creating account "+BANKB)
-		return nil, err
-	}
-
-	// BANK C
-	var fid3 FinancialInst
-	fid3.Owner = BANKC
-
-	var actCA Account
-	actCA.Holder = BANKA
-	actCA.Currency = "EUR"
-	actCA.CashBalance = actAC.CashBalance * USDEUR
-	fid3.Accounts = append(fid3.Accounts, actCA)
-	var actCB Account
-	actCB.Holder = BANKB
-	actCB.Currency = "EUR"
-	actCB.CashBalance = actBC.CashBalance * AUDEUR
-	fid3.Accounts = append(fid3.Accounts, actCB)
-
-	jsonAsBytes, _ = json.Marshal(fid3)
-	err = stub.PutState("BANKC", jsonAsBytes)								
-	if err != nil {
-		fmt.Println("Error creating account "+BANKC)
-		return nil, err
-	}
-	
-	var transactions AllTransactions
-	jsonAsBytes, _ = json.Marshal(transactions)
-	err = stub.PutState("allTx", jsonAsBytes)
-	if err != nil {
-		return nil, err
-	}
 	
 	return nil, nil
 }
@@ -302,8 +228,6 @@ func (t *SimpleChaincode) getNVAccounts(stub *shim.ChaincodeStub, finInst string
 	
 	fmt.Println("Start find getNVAccounts")
 	fmt.Println("Looking for " + finInst);
-
-
 	
 	
 	//get the User index
@@ -480,26 +404,25 @@ func (t *SimpleChaincode) submitTx(stub *shim.ChaincodeStub, args []string) ([]b
 func (t *SimpleChaincode) updateUserAccount(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 
 	fmt.Println("Running updateUserAccount")
-	
 
 	userId := args[0]
 	amountValue, err := strconv.ParseFloat(args[1], 64)
-
 	
-	//***************************************************************
-	// Get Receiver account from BC
+
+	// Get user account from the blockchain
 	rfidBytes, err := stub.GetState(userId)
 	if err != nil {
 		return nil, errors.New("updateUserAccount Failed to get User from BC")
 	}
-	var receiver User
-	fmt.Println("SubmitTx Unmarshalling User Struct");
-	err = json.Unmarshal(rfidBytes, &receiver)
-	receiver.Balance = receiver.Balance  + amountValue
 	
-	//Commit Receiver to ledger
-	fmt.Println("SubmitTx Commit Updated Sender To Ledger");
-	txsAsBytes, _ := json.Marshal(receiver)
+	var account User
+	fmt.Println("SubmitTx Unmarshalling User Struct");
+	err = json.Unmarshal(rfidBytes, &account)
+	account.Balance = account.Balance  + amountValue
+	
+	// Commit user account to ledger
+	fmt.Println("SubmitTx Commit Updated user account To Ledger");
+	txsAsBytes, _ := json.Marshal(account)
 	err = stub.PutState(userId, txsAsBytes)	
 	if err != nil {
 		return nil, err
@@ -507,7 +430,7 @@ func (t *SimpleChaincode) updateUserAccount(stub *shim.ChaincodeStub, args []str
 
 	
 	return nil, nil
-	//***********************************************************************
+
 }
 
 func (t *SimpleChaincode) creditVostroAccount(stub *shim.ChaincodeStub, sender string, receiver string, amount float64) ([]byte, error) {
