@@ -43,17 +43,9 @@ const TESTCONV= 1.13
 type SimpleChaincode struct {
 }
 
-type Account struct {
-	Holder    	string  `json:"holder"`
-	Currency  	string  `json:"currency"`
-	CashBalance float64 `json:"cashBalance"`
-}
 
-type FinancialInst struct {
-	Owner     	string  `json:"owner"`
-	Accounts []Account `json:"accounts"`
-}
 
+// New structs for API demo
 type Transaction struct {
 	RefNumber   string   `json:"refNumber"`
 	Date 		string   `json:"date"`
@@ -78,6 +70,8 @@ type User struct {
 	Modified	string   `json:"LastModifiedDate"`
 }
 
+
+// Old structs from NV demo - to be deleted 
 type AllTransactions struct{
 	Transactions []Transaction `json:"transactions"`
 }
@@ -91,16 +85,65 @@ type NVAccounts struct {
 	Vostro 		[]FinancialInst `json:"vostro"`
 }
 
+
+type Account struct {
+	Holder    	string  `json:"holder"`
+	Currency  	string  `json:"currency"`
+	CashBalance float64 `json:"cashBalance"`
+}
+
+type FinancialInst struct {
+	Owner     	string  `json:"owner"`
+	Accounts []Account `json:"accounts"`
+}
+
 // ============================================================================================================================
-// Init 
+// Init - initiate data structures and blockchain
 // ============================================================================================================================
 func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 
 	var err error
 
-	// Natalie
+		
+	// Create the 'Bank' user and add it to the blockchain
+	var bank User
+	bank.UserId = "1";
+	bank.Name = "Open Financial Network"
+	bank.Balance = 1000000
+	bank.Status  = "Originator"
+	bank.Expiration = "2099-12-31"
+	bank.Join  = "2015-01-01"
+	bank.Modified = "2016-05-06"
+	
+	jsonAsBytes, _ := json.Marshal(bank)
+	err = stub.PutState(bank.UserId, jsonAsBytes)								
+	if err != nil {
+		fmt.Println("Error Creating Bank user account")
+		return nil, err
+	}
+	
+	
+    // Create the 'Travel Agency' user and add it to the blockchain
+	var travel User
+	travel.UserId = "2";
+	travel.Name = "Open Travel Network"
+	travel.Balance = 500000
+	travel.Status  = "Member"
+	travel.Expiration = "2099-12-31"
+	travel.Join  = "2015-01-01"
+	travel.Modified = "2016-05-06"
+	
+	jsonAsBytes, _ = json.Marshal(travel)
+	err = stub.PutState(travel.UserId, jsonAsBytes)								
+	if err != nil {
+		fmt.Println("Error Creating Travel user account")
+		return nil, err
+	}
+	
+	
+	// Create the 'Natalie' user and add her to the blockchain
 	var natalie User
-	natalie.UserId = "1";
+	natalie.UserId = "3";
 	natalie.Name = "Natalie"
 	natalie.Balance = 1000
 	natalie.Status  = "Platinum"
@@ -108,7 +151,7 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	natalie.Join  = "2015-05-31"
 	natalie.Modified = "2016-05-06"
 	
-	jsonAsBytes, _ := json.Marshal(natalie)
+	jsonAsBytes, _ = json.Marshal(natalie)
 	err = stub.PutState(natalie.UserId, jsonAsBytes)								
 	if err != nil {
 		fmt.Println("Error Creating Natalie user account")
@@ -116,11 +159,9 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	}
 	
 	
-	
-	
-		// Anthony
+	// Create the 'Anthony' user and add him to the blockchain
 	var anthony User
-	anthony.UserId = "2";
+	anthony.UserId = "4";
 	anthony.Name = "Anthony"
 	anthony.Balance = 500
 	anthony.Status  = "Silver"
@@ -165,6 +206,7 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 
 // ============================================================================================================================
 // Run - Our entry point
+// Function names called from Node JS must be added here in order to be callable
 // ============================================================================================================================
 func (t *SimpleChaincode) Run(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 	fmt.Println("run is running " + function)
