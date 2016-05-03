@@ -217,8 +217,11 @@ func (t *SimpleChaincode) Run(stub *shim.ChaincodeStub, function string, args []
 	} else if function == "submitTx" {											//create a transaction
 		return t.submitTx(stub, args) 
 	} else if function == "updateUserAccount" {											//create a transaction
-		return t.updateUserAccount(stub, args)
+		return t.updateUserAccount(stub, args) 
+	} else if function == "transferPoints" {											//create a transaction
+		return t.transferPoints(stub, args)
 	} 
+	
 	
 	fmt.Println("run did not find func: " + function)						//error
 
@@ -441,6 +444,75 @@ func (t *SimpleChaincode) submitTx(stub *shim.ChaincodeStub, args []string) ([]b
 	//***********************************************************************
 }
 
+
+// ============================================================================================================================
+func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+
+	fmt.Println("Running transferPoints")
+	
+	
+	var tx Transaction
+	tx.RefNumber 	= "1000"
+	tx.Date 		= "Today"
+	tx.Description 	= "PointsTransfer"
+	tx.Type 	    = "Valid"
+	tx.To 			= args[0]
+	tx.From 		= args[1]
+	tx.Contract 	= "Standard"
+	tx.StatusCode 	= 1
+	tx.StatusMsg 	= "Transaction Completed"
+	
+	
+	amountValue, err := strconv.ParseFloat(args[2], 64)
+	if err != nil {
+		tx.StatusCode = 0
+		tx.StatusMsg = "Invalid Amount"
+	}else{
+		tx.Amount = amountValue
+	}
+	
+	
+	//***************************************************************
+	// Get Receiver account from BC
+	rfidBytes, err := stub.GetState(tx.To)
+	if err != nil {
+		return nil, errors.New("transferPoints Failed to get User from BC")
+	}
+	var receiver User
+	fmt.Println("transferPoints Unmarshalling User Struct");
+	err = json.Unmarshal(rfidBytes, &receiver)
+	receiver.Balance = receiver.Balance  + tx.Amount
+	
+	//Commit Receiver to ledger
+	fmt.Println("transferPoints Commit Updated Sender To Ledger");
+	txsAsBytes, _ := json.Marshal(receiver)
+	err = stub.PutState(tx.To, txsAsBytes)	
+	if err != nil {
+		return nil, err
+	}
+	
+	// Get Sender account from BC
+	rfidBytes, err = stub.GetState(tx.From)
+	if err != nil {
+		return nil, errors.New("transferPoints Failed to get Financial Institution")
+	}
+	var sender FinancialInst
+	fmt.Println("transferPoints Unmarshalling Financial Institution");
+	err = json.Unmarshal(rfidBytes, &sender)
+	sender.Accounts[0].CashBalance   = sender.Accounts[0].CashBalance  - tx.Amount
+	
+	//Commit Sender to ledger
+	fmt.Println("transferPoints Commit Updated Sender To Ledger");
+	txsAsBytes, _ = json.Marshal(sender)
+	err = stub.PutState(tx.From, txsAsBytes)	
+	if err != nil {
+		return nil, err
+	}
+	
+	
+	return nil, nil
+	//***********************************************************************
+}
 
 // ============================================================================================================================
 func (t *SimpleChaincode) updateUserAccount(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
