@@ -476,7 +476,7 @@ func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string
 	// Get Receiver account from BC
 	rfidBytes, err := stub.GetState(tx.To)
 	if err != nil {
-		return nil, errors.New("transferPoints Failed to get User from BC")
+		return nil, errors.New("transferPoints Failed to get Receiver from BC")
 	}
 	var receiver User
 	fmt.Println("transferPoints Unmarshalling User Struct");
@@ -484,7 +484,7 @@ func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string
 	receiver.Balance = receiver.Balance  + tx.Amount
 	
 	//Commit Receiver to ledger
-	fmt.Println("transferPoints Commit Updated Sender To Ledger");
+	fmt.Println("transferPoints Commit Updated receiver To Ledger");
 	txsAsBytes, _ := json.Marshal(receiver)
 	err = stub.PutState(tx.To, txsAsBytes)	
 	if err != nil {
@@ -496,10 +496,10 @@ func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string
 	if err != nil {
 		return nil, errors.New("transferPoints Failed to get Financial Institution")
 	}
-	var sender FinancialInst
-	fmt.Println("transferPoints Unmarshalling Financial Institution");
+	var sender User
+	fmt.Println("transferPoints Unmarshalling Sender");
 	err = json.Unmarshal(rfidBytes, &sender)
-	sender.Accounts[0].CashBalance   = sender.Accounts[0].CashBalance  - tx.Amount
+	sender.Balance   = sender.Balance  - tx.Amount
 	
 	//Commit Sender to ledger
 	fmt.Println("transferPoints Commit Updated Sender To Ledger");
