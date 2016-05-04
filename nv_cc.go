@@ -532,6 +532,7 @@ func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string
 	fmt.Println("transferPoints Unmarshalling User Struct");
 	err = json.Unmarshal(rfidBytes, &receiver)
 	receiver.Balance = receiver.Balance  + tx.Amount
+	receiver.Modified = currentDateStr
 	tx.ToName = receiver.Name;
 	
 	
@@ -552,6 +553,7 @@ func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string
 	fmt.Println("transferPoints Unmarshalling Sender");
 	err = json.Unmarshal(rfidBytes, &sender)
 	sender.Balance   = sender.Balance  - tx.Amount
+	sender.Modified = currentDateStr
 	tx.FromName = sender.Name;
 	
 	//Commit Sender to ledger
