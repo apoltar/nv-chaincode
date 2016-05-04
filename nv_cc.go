@@ -47,16 +47,18 @@ type SimpleChaincode struct {
 
 // New structs for API demo
 type Transaction struct {
-	RefNumber   string   `json:"refNumber"`
-	Date 		string   `json:"date"`
+	RefNumber   string   `json:"RefNumber"`
+	Date 		string   `json:"Date"`
 	Description string   `json:"description"`
-	Type 		string   `json:"type"`
-	Amount    	float64  `json:"amount"`
-	To			string   `json:"to"`
-	From		string   `json:"from"`
-	Contract	string   `json:"contract"`
-	StatusCode	int 	 `json:"statusCode"`
-	StatusMsg	string   `json:"statusMsg"`
+	Type 		string   `json:"Type"`
+	Amount    	float64  `json:"Amount"`
+	To			string   `json:"ToUserid"`
+	From		string   `json:"FromUserid"`
+	ToName	    string   `json:"ToName"`
+	FromName	string   `json:"FromName"`
+	Contract	string   `json:"Contract"`
+	StatusCode	int 	 `json:"StatusCode"`
+	StatusMsg	string   `json:"StatusMsg"`
 }
 
 
@@ -333,12 +335,12 @@ func (t *SimpleChaincode) getUserAccount(stub *shim.ChaincodeStub, userId string
 // ============================================================================================================================
 // Get Transactions for a specific Financial Institution (Inbound and Outbound)
 // ============================================================================================================================
-func (t *SimpleChaincode) getTxs(stub *shim.ChaincodeStub, userName string)([]byte, error){
+func (t *SimpleChaincode) getTxs(stub *shim.ChaincodeStub, userId string)([]byte, error){
 	
 	var res AllTransactions
 
 	fmt.Println("Start find getTransactions")
-	fmt.Println("Looking for " + userName);
+	fmt.Println("Looking for " + userId);
 
 	//get the AllTransactions index
 	allTxAsBytes, err := stub.GetState("allTx")
@@ -351,11 +353,11 @@ func (t *SimpleChaincode) getTxs(stub *shim.ChaincodeStub, userName string)([]by
 
 	for i := range txs.Transactions{
 
-		if txs.Transactions[i].From == userName{
+		if txs.Transactions[i].From == userId{
 			res.Transactions = append(res.Transactions, txs.Transactions[i])
 		}
 
-		if txs.Transactions[i].To == userName{
+		if txs.Transactions[i].To == userId{
 			res.Transactions = append(res.Transactions, txs.Transactions[i])
 		}
 
@@ -418,6 +420,7 @@ func (t *SimpleChaincode) submitTx(stub *shim.ChaincodeStub, args []string) ([]b
 	fmt.Println("SubmitTx Unmarshalling User Struct");
 	err = json.Unmarshal(rfidBytes, &receiver)
 	receiver.Balance = receiver.Balance  + tx.Amount
+	
 	
 	//Commit Receiver to ledger
 	fmt.Println("SubmitTx Commit Updated Sender To Ledger");
@@ -488,6 +491,8 @@ func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string
 	fmt.Println("transferPoints Unmarshalling User Struct");
 	err = json.Unmarshal(rfidBytes, &receiver)
 	receiver.Balance = receiver.Balance  + tx.Amount
+	tx.ToName = receiver.Name;
+	
 	
 	//Commit Receiver to ledger
 	fmt.Println("transferPoints Commit Updated receiver To Ledger");
@@ -506,6 +511,7 @@ func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string
 	fmt.Println("transferPoints Unmarshalling Sender");
 	err = json.Unmarshal(rfidBytes, &sender)
 	sender.Balance   = sender.Balance  - tx.Amount
+	tx.FromName = sender.Name;
 	
 	//Commit Sender to ledger
 	fmt.Println("transferPoints Commit Updated Sender To Ledger");
