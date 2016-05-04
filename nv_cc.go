@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 	"strconv"
 	"github.com/openblockchain/obc-peer/openchain/chaincode/shim"
 )
@@ -185,6 +186,26 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	if err != nil {
 		return nil, err
 	}
+	
+	// Create current reference number if necessary
+	var refNumber int
+	refNumberBytes, numErr := stub.GetState("refNumber")
+	if numErr != nil {
+	
+		refNumber = 1
+		jsonAsBytes, _ = json.Marshal(refNumber)
+		err = stub.PutState("refNumber", jsonAsBytes)								
+		if err != nil {
+			fmt.Println("Error Creating reference number")
+			return nil, err
+		}
+	} else {
+		err = json.Unmarshal(refNumberBytes, &refNumber)
+	}
+	
+
+
+
 	
 	
 	//BANK A
@@ -458,11 +479,12 @@ func (t *SimpleChaincode) submitTx(stub *shim.ChaincodeStub, args []string) ([]b
 func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 
 	fmt.Println("Running transferPoints")
-	
+	currentDateStr := time.Now().Format(time.RFC850)
+
 	
 	var tx Transaction
-	tx.RefNumber 	= "1000"
-	tx.Date 		= "Today"
+	//tx.RefNumber 	= "1000"
+	tx.Date 		=  currentDateStr
 	tx.Description 	= "PointsTransfer"
 	tx.Type 	    = "Valid"
 	tx.To 			= args[0]
@@ -478,6 +500,25 @@ func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string
 		tx.StatusMsg = "Invalid Amount"
 	}else{
 		tx.Amount = amountValue
+	}
+	
+	
+	// Get the current reference number and update it
+	var refNumber int
+	refNumberBytes, numErr := stub.GetState("refNumber")
+	if numErr != nil {
+		fmt.Println("Error Getting  ref number for transferring points")
+		return nil, err
+	}
+	
+	json.Unmarshal(refNumberBytes, &refNumber)
+	tx.RefNumber 	= strconv.Itoa(refNumber)
+	refNumber = refNumber + 1;
+	refNumberBytes, _ = json.Marshal(refNumber)
+	err = stub.PutState("refNumber", refNumberBytes)								
+	if err != nil {
+		fmt.Println("Error Creating updating ref number")
+		return nil, err
 	}
 	
 	
