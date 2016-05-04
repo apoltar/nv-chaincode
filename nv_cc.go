@@ -176,6 +176,15 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 		return nil, err
 	}
 	
+	
+	var transactions AllTransactions
+	jsonAsBytes, _ = json.Marshal(transactions)
+	err = stub.PutState("allTx", jsonAsBytes)
+	if err != nil {
+		return nil, err
+	}
+	
+	
 	//BANK A
 	var fid FinancialInst
 	fid.Owner = BANKA
@@ -324,12 +333,12 @@ func (t *SimpleChaincode) getUserAccount(stub *shim.ChaincodeStub, userId string
 // ============================================================================================================================
 // Get Transactions for a specific Financial Institution (Inbound and Outbound)
 // ============================================================================================================================
-func (t *SimpleChaincode) getTxs(stub *shim.ChaincodeStub, finInst string)([]byte, error){
+func (t *SimpleChaincode) getTxs(stub *shim.ChaincodeStub, userName string)([]byte, error){
 	
 	var res AllTransactions
 
 	fmt.Println("Start find getTransactions")
-	fmt.Println("Looking for " + finInst);
+	fmt.Println("Looking for " + userName);
 
 	//get the AllTransactions index
 	allTxAsBytes, err := stub.GetState("allTx")
@@ -342,17 +351,14 @@ func (t *SimpleChaincode) getTxs(stub *shim.ChaincodeStub, finInst string)([]byt
 
 	for i := range txs.Transactions{
 
-		if txs.Transactions[i].From == finInst{
+		if txs.Transactions[i].From == userName{
 			res.Transactions = append(res.Transactions, txs.Transactions[i])
 		}
 
-		if txs.Transactions[i].To == finInst{
+		if txs.Transactions[i].To == userName{
 			res.Transactions = append(res.Transactions, txs.Transactions[i])
 		}
 
-		if(finInst == AUDITOR) {
-			res.Transactions = append(res.Transactions, txs.Transactions[i])
-		}
 	}
 
 	resAsBytes, _ := json.Marshal(res)
@@ -505,6 +511,24 @@ func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string
 	fmt.Println("transferPoints Commit Updated Sender To Ledger");
 	txsAsBytes, _ = json.Marshal(sender)
 	err = stub.PutState(tx.From, txsAsBytes)	
+	if err != nil {
+		return nil, err
+	}
+	
+	
+	//get the AllTransactions index
+	allTxAsBytes, err := stub.GetState("allTx")
+	if err != nil {
+		return nil, errors.New("SubmitTx Failed to get all Transactions")
+	}
+
+	//Commit transaction to ledger
+	fmt.Println("SubmitTx Commit Transaction To Ledger");
+	var txs AllTransactions
+	json.Unmarshal(allTxAsBytes, &txs)
+	txs.Transactions = append(txs.Transactions, tx)
+	txsAsBytes, _ = json.Marshal(txs)
+	err = stub.PutState("allTx", txsAsBytes)	
 	if err != nil {
 		return nil, err
 	}
