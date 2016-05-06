@@ -105,6 +105,132 @@ type FinancialInst struct {
 // ============================================================================================================================
 func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 
+	var err error
+
+		
+	// Create the 'Bank' user and add it to the blockchain
+	var bank User
+	bank.UserId = "1";
+	bank.Name = "Open Financial Network"
+	bank.Balance = 1000000
+	bank.Status  = "Originator"
+	bank.Expiration = "2099-12-31"
+	bank.Join  = "2015-01-01"
+	bank.Modified = "2016-05-06"
+	
+	jsonAsBytes, _ := json.Marshal(bank)
+	err = stub.PutState(bank.UserId, jsonAsBytes)								
+	if err != nil {
+		fmt.Println("Error Creating Bank user account")
+		return nil, err
+	}
+	
+	
+    // Create the 'Travel Agency' user and add it to the blockchain
+	var travel User
+	travel.UserId = "2";
+	travel.Name = "Open Travel Network"
+	travel.Balance = 500000
+	travel.Status  = "Member"
+	travel.Expiration = "2099-12-31"
+	travel.Join  = "2015-01-01"
+	travel.Modified = "2016-05-06"
+	
+	jsonAsBytes, _ = json.Marshal(travel)
+	err = stub.PutState(travel.UserId, jsonAsBytes)								
+	if err != nil {
+		fmt.Println("Error Creating Travel user account")
+		return nil, err
+	}
+	
+	
+	// Create the 'Natalie' user and add her to the blockchain
+	var natalie User
+	natalie.UserId = "3";
+	natalie.Name = "Natalie"
+	natalie.Balance = 1000
+	natalie.Status  = "Platinum"
+	natalie.Expiration = "2017-06-01"
+	natalie.Join  = "2015-05-31"
+	natalie.Modified = "2016-05-06"
+	
+	jsonAsBytes, _ = json.Marshal(natalie)
+	err = stub.PutState(natalie.UserId, jsonAsBytes)								
+	if err != nil {
+		fmt.Println("Error Creating Natalie user account")
+		return nil, err
+	}
+	
+	
+	// Create the 'Anthony' user and add him to the blockchain
+	var anthony User
+	anthony.UserId = "4";
+	anthony.Name = "Anthony"
+	anthony.Balance = 500
+	anthony.Status  = "Silver"
+	anthony.Expiration = "2017-03-15"
+	anthony.Join  = "2015-08-15"
+	anthony.Modified = "2016-04-17"
+	
+	jsonAsBytes, _ = json.Marshal(anthony)
+	err = stub.PutState(anthony.UserId, jsonAsBytes)								
+	if err != nil {
+		fmt.Println("Error Creating Anthony user account")
+		return nil, err
+	}
+	
+	
+	var transactions AllTransactions
+	jsonAsBytes, _ = json.Marshal(transactions)
+	err = stub.PutState("allTx", jsonAsBytes)
+	if err != nil {
+		return nil, err
+	}
+	
+	// Create current reference number if necessary
+	var refNumber int
+	refNumberBytes, numErr := stub.GetState("refNumber")
+	if numErr != nil {
+	
+		refNumber = 1
+		jsonAsBytes, _ = json.Marshal(refNumber)
+		err = stub.PutState("refNumber", jsonAsBytes)								
+		if err != nil {
+			fmt.Println("Error Creating reference number")
+			return nil, err
+		}
+	} else {
+		err = json.Unmarshal(refNumberBytes, &refNumber)
+	}
+	
+
+
+
+	
+	
+	//BANK A
+	var fid FinancialInst
+	fid.Owner = BANKA
+	
+	var actAB Account
+	actAB.Holder = BANKB
+	actAB.Currency = "USD"
+	actAB.CashBalance = 250000
+	fid.Accounts = append(fid.Accounts, actAB)
+	var actAC Account
+	actAC.Holder = BANKC
+	actAC.Currency = "USD"
+	actAC.CashBalance = 300000
+	fid.Accounts = append(fid.Accounts, actAC)
+
+	jsonAsBytes, _ = json.Marshal(fid)
+	err = stub.PutState("BANKA", jsonAsBytes)								
+	if err != nil {
+		fmt.Println("Error creating account "+BANKA)
+		return nil, err
+	}
+
+	
 	return nil, nil
 }
 
