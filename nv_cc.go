@@ -155,11 +155,11 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	natalie.Modified = "2016-05-06"
 	
 	jsonAsBytes, _ = json.Marshal(natalie)
-	err = stub.PutState(natalie.UserId, jsonAsBytes)								
-	if err != nil {
-		fmt.Println("Error Creating Natalie user account")
-		return nil, err
-	}
+	//err = stub.PutState(natalie.UserId, jsonAsBytes)								
+	//if err != nil {
+	//	fmt.Println("Error Creating Natalie user account")
+	//	return nil, err
+	//}
 	
 	
 	// Create the 'Anthony' user and add him to the blockchain
@@ -173,35 +173,35 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	anthony.Modified = "2016-04-17"
 	
 	jsonAsBytes, _ = json.Marshal(anthony)
-	err = stub.PutState(anthony.UserId, jsonAsBytes)								
-	if err != nil {
-		fmt.Println("Error Creating Anthony user account")
-		return nil, err
-	}
+	//err = stub.PutState(anthony.UserId, jsonAsBytes)								
+	//if err != nil {
+	//	fmt.Println("Error Creating Anthony user account")
+	//	return nil, err
+	//}
 	
 	
 	var transactions AllTransactions
 	jsonAsBytes, _ = json.Marshal(transactions)
-	err = stub.PutState("allTx", jsonAsBytes)
-	if err != nil {
-		return nil, err
-	}
+	//err = stub.PutState("allTx", jsonAsBytes)
+	//if err != nil {
+	//	return nil, err
+	//}
 	
 	// Create current reference number if necessary
-	var refNumber int
-	refNumberBytes, numErr := stub.GetState("refNumber")
-	if numErr != nil {
+	//var refNumber int
+	//refNumberBytes, numErr := stub.GetState("refNumber")
+	//if numErr != nil {
 	
-		refNumber = 1
-		jsonAsBytes, _ = json.Marshal(refNumber)
-		err = stub.PutState("refNumber", jsonAsBytes)								
-		if err != nil {
-			fmt.Println("Error Creating reference number")
-			return nil, err
-		}
-	} else {
-		err = json.Unmarshal(refNumberBytes, &refNumber)
-	}
+	//	refNumber = 1
+	//	jsonAsBytes, _ = json.Marshal(refNumber)
+	//	err = stub.PutState("refNumber", jsonAsBytes)								
+	//	if err != nil {
+	//		fmt.Println("Error Creating reference number")
+	//		return nil, err
+	//	}
+	//} else {
+	//	err = json.Unmarshal(refNumberBytes, &refNumber)
+	//}
 	
 
 
