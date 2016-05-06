@@ -119,11 +119,11 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	bank.Modified = "2016-05-06"
 	
 	jsonAsBytes, _ := json.Marshal(bank)
-	err = stub.PutState(bank.UserId, jsonAsBytes)								
-	if err != nil {
-		fmt.Println("Error Creating Bank user account")
-		return nil, err
-	}
+	//err = stub.PutState(bank.UserId, jsonAsBytes)								
+	//if err != nil {
+	//	fmt.Println("Error Creating Bank user account")
+	//	return nil, err
+	//}
 	
 	
     // Create the 'Travel Agency' user and add it to the blockchain
@@ -137,11 +137,11 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	travel.Modified = "2016-05-06"
 	
 	jsonAsBytes, _ = json.Marshal(travel)
-	err = stub.PutState(travel.UserId, jsonAsBytes)								
-	if err != nil {
-		fmt.Println("Error Creating Travel user account")
-		return nil, err
-	}
+	//err = stub.PutState(travel.UserId, jsonAsBytes)								
+	//if err != nil {
+	//	fmt.Println("Error Creating Travel user account")
+	//	return nil, err
+	//}
 	
 	
 	// Create the 'Natalie' user and add her to the blockchain
