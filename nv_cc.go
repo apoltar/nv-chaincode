@@ -533,7 +533,7 @@ func doubleContract(tx Transaction, stub *shim.ChaincodeStub) float64 {
 	json.Unmarshal(contractAsBytes, &contract)
 	
 	var pointsToTransfer float64
-	pointsToTransfer = tx.Amount
+	pointsToTransfer = tx.Amount * 3
 	if (tx.Date.After(contract.StartDate) && tx.Date.Before(contract.EndDate)) {
 	     pointsToTransfer = pointsToTransfer * 2
 	}
@@ -609,13 +609,13 @@ func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string
 		return nil, err
 	}
 	
-	var pointsToTransfer float64
+	
 	if (tx.ContractId == STANDARD) {
-		pointsToTransfer = standardContract(tx, stub)
+		tx.Amount = standardContract(tx, stub)
 	} else if (tx.ContractId == DOUBLE) {
-		pointsToTransfer = doubleContract(tx, stub)
+		tx.Amount = doubleContract(tx, stub)
 	} else if (tx.ContractId == FEEDBACK) {
-		pointsToTransfer = feedbackContract(tx, stub)
+		tx.Amount = feedbackContract(tx, stub)
 	}
 	
 	//***************************************************************
@@ -627,7 +627,7 @@ func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string
 	var receiver User
 	fmt.Println("transferPoints Unmarshalling User Struct");
 	err = json.Unmarshal(rfidBytes, &receiver)
-	receiver.Balance = receiver.Balance  + pointsToTransfer
+	receiver.Balance = receiver.Balance  + tx.Amount
 	receiver.Modified = currentDateStr
 	tx.ToName = receiver.Name;
 	
@@ -648,7 +648,7 @@ func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string
 	var sender User
 	fmt.Println("transferPoints Unmarshalling Sender");
 	err = json.Unmarshal(rfidBytes, &sender)
-	sender.Balance   = sender.Balance  - pointsToTransfer
+	sender.Balance   = sender.Balance  - tx.Amount
 	sender.Modified = currentDateStr
 	tx.FromName = sender.Name;
 	
