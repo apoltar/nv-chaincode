@@ -325,7 +325,7 @@ func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args 
 
 	if len(args) != 2 { return nil, errors.New("Incorrect number of arguments passed") }
 
-	if args[0] != "getFIDetails" && args[0] != "getTxs" && args[0] != "getNVAccounts"&& args[0] != "getUserAccount"{
+	if args[0] != "getFIDetails" && args[0] != "getTxs" && args[0] != "getNVAccounts"&& args[0] != "getUserAccount"  && args[0] != "getContractDetails"{
 		return nil, errors.New("Invalid query function name.")
 	}
 
