@@ -244,6 +244,27 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 		fmt.Println("Error creating double contract")
 		return nil, err
 	}
+	
+	
+   var feedback Contract
+
+	feedback.Id = FEEDBACK
+	feedback.Title = "Points for Feedback"
+	feedback.Description = "Earn points when you submit feedback regarding your travel experience"
+	feedback.Conditions = append(double.Conditions, "test condition")
+	feedback.Icon = ""
+	feedback.Method = "feedbackContract"
+	startDate, _  = time.Parse(time.RFC822, "01 Jan 16 10:00 UTC")
+	feedback.StartDate = startDate
+	endDate, _  = time.Parse(time.RFC822, "31 Dec 16 11:59 UTC")
+	feedback.EndDate = endDate
+	
+	jsonAsBytes, _ = json.Marshal(feedback)
+	err = stub.PutState(FEEDBACK, jsonAsBytes)								
+	if err != nil {
+		fmt.Println("Error creating feedback contract")
+		return nil, err
+	}
 
 	//BANK A
 	var fid FinancialInst
@@ -516,7 +537,7 @@ func standardContract(tx Transaction, stub *shim.ChaincodeStub) float64 {
   
   
   var pointsToTransfer float64
-  pointsToTransfer = tx.Amount / 2
+  pointsToTransfer = tx.Amount
   return pointsToTransfer
   
   
@@ -535,7 +556,7 @@ func doubleContract(tx Transaction, stub *shim.ChaincodeStub) float64 {
 	var pointsToTransfer float64
 	pointsToTransfer = tx.Amount
 	if (tx.Date.After(contract.StartDate) && tx.Date.Before(contract.EndDate)) {
-	     pointsToTransfer = pointsToTransfer *-1
+	     pointsToTransfer = pointsToTransfer * 2
 	}
  
  
@@ -544,12 +565,36 @@ func doubleContract(tx Transaction, stub *shim.ChaincodeStub) float64 {
   
 }
 
+func getContractDetails(contractId string, stub *shim.ChaincodeStub) Contract  {
+
+	contractAsBytes, _ := stub.GetState(contractId)
+	var contract Contract
+	json.Unmarshal(contractAsBytes, &contract)
+
+	return contract
+
+}
+
+
 
 func feedbackContract(tx Transaction, stub *shim.ChaincodeStub) float64 {
   
   
-  var pointsToTransfer float64
-  pointsToTransfer = 1000 * 5
+    //get the AllTransactions index
+	contractAsBytes, err := stub.GetState(FEEDBACK)
+	if err != nil {
+		return -99
+	}
+	var contract Contract
+	json.Unmarshal(contractAsBytes, &contract)
+	
+	var pointsToTransfer float64
+	pointsToTransfer = 0
+	if (tx.Date.After(contract.StartDate) && tx.Date.Before(contract.EndDate)) {
+	     pointsToTransfer = tx.Amount
+	}
+  
+  
   return pointsToTransfer
   
   
@@ -609,7 +654,7 @@ func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string
 		return nil, err
 	}
 	
-	
+	// Determine point amount to transfer based on contract type
 	if (tx.ContractId == STANDARD) {
 		tx.Amount = standardContract(tx, stub)
 	} else if (tx.ContractId == DOUBLE) {
