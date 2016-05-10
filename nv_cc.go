@@ -40,6 +40,10 @@ const AUDEUR = 0.67
 const EURAUD = 1.48
 const TESTCONV= 1.13
 
+const STANDARD = "0"
+const DOUBLE   = "1"
+const SURVEY   = "2"
+
 // SimpleChaincode example simple Chaincode implementation
 type SimpleChaincode struct {
 }
@@ -60,7 +64,7 @@ type Transaction struct {
 	From		string   `json:"FromUserid"`
 	ToName	    string   `json:"ToName"`
 	FromName	string   `json:"FromName"`
-	Contract	string   `json:"Contract"`
+	ContractId	string   `json:"ContractId"`
 	StatusCode	int 	 `json:"StatusCode"`
 	StatusMsg	string   `json:"StatusMsg"`
 }
@@ -433,7 +437,7 @@ func (t *SimpleChaincode) submitTx(stub *shim.ChaincodeStub, args []string) ([]b
 	tx.Type 	    = args[3]
 	tx.To 			= args[5]
 	tx.From 		= args[6]
-	tx.Contract 	= args[7]
+	tx.ContractId 	= args[7]
 	tx.StatusCode 	= 1
 	tx.StatusMsg 	= "Transaction Completed"
 	
@@ -490,6 +494,15 @@ func (t *SimpleChaincode) submitTx(stub *shim.ChaincodeStub, args []string) ([]b
 	//***********************************************************************
 }
 
+func standardContract(tx Transaction, stub *shim.ChaincodeStub) float64 {
+  
+  
+  var pointsToTransfer float64
+  pointsToTransfer = tx.Amount
+  return pointsToTransfer
+  
+  
+}
 
 // ============================================================================================================================
 func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
@@ -504,7 +517,7 @@ func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string
 	tx.From 		= args[1]
 	tx.Type 	    = args[2]
 	tx.Description 	= args[3]
-	tx.Contract 	= "Standard"
+	tx.ContractId 	= "0"
 	tx.StatusCode 	= 1
 	tx.StatusMsg 	= "Transaction Completed"
 	
@@ -544,6 +557,10 @@ func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string
 		return nil, err
 	}
 	
+	var pointsToTransfer float64
+	if (tx.ContractId == STANDARD) {
+		pointsToTransfer = standardContract(tx, stub)
+	}
 	
 	//***************************************************************
 	// Get Receiver account from BC
@@ -554,7 +571,7 @@ func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string
 	var receiver User
 	fmt.Println("transferPoints Unmarshalling User Struct");
 	err = json.Unmarshal(rfidBytes, &receiver)
-	receiver.Balance = receiver.Balance  + tx.Amount
+	receiver.Balance = receiver.Balance  + pointsToTransfer
 	receiver.Modified = currentDateStr
 	tx.ToName = receiver.Name;
 	
@@ -575,7 +592,7 @@ func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string
 	var sender User
 	fmt.Println("transferPoints Unmarshalling Sender");
 	err = json.Unmarshal(rfidBytes, &sender)
-	sender.Balance   = sender.Balance  - tx.Amount
+	sender.Balance   = sender.Balance  - pointsToTransfer
 	sender.Modified = currentDateStr
 	tx.FromName = sender.Name;
 	
