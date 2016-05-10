@@ -42,7 +42,7 @@ const TESTCONV= 1.13
 
 const STANDARD = "0"
 const DOUBLE   = "1"
-const SURVEY   = "2"
+const FEEDBACK = "2"
 
 // SimpleChaincode example simple Chaincode implementation
 type SimpleChaincode struct {
@@ -55,7 +55,7 @@ type SimpleChaincode struct {
 // update the member numbers, description, points activities variation, etc. 
 type Transaction struct {
 	RefNumber   string   `json:"RefNumber"`
-	Date 		string   `json:"Date"`
+	Date 		time.Time   `json:"Date"`
 	Description string   `json:"description"`
 	Type 		string   `json:"Type"`
 	Amount    	float64  `json:"Amount"`
@@ -76,8 +76,8 @@ type Contract struct {
 	Description string   `json:"Description"`
 	Conditions  []string `json:"Conditions"`
 	Icon        string 	 `json:"Icon"`
-	StartDate   string   `json:"StartDate"`
-	EndDate		string   `json:"EndDate"`
+	StartDate   time.Time   `json:"StartDate"`
+	EndDate		time.Time   `json:"EndDate"`
 	Method	    string   `json:"Method"`
 }
 
@@ -127,7 +127,8 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 
 	var err error
 
-		
+	
+	
 	// Create the 'Bank' user and add it to the blockchain
 	var bank User
 	bank.UserId = "B1928564";
@@ -223,11 +224,27 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	//	err = json.Unmarshal(refNumberBytes, &refNumber)
 	//}
 	
+	var double Contract
 
-
-
+	double.Id = DOUBLE
+	double.Title = "Double Points"
+	double.Description = "Earn double points when you shop during promotion periods"
+	double.Conditions = append(double.Conditions, "test condition")
+	double.Icon = ""
+	double.Method = "doubleContract"
 	
+	startDate, _  := time.Parse(time.RFC822, "01 Jan 16 10:00 UTC")
+	double.StartDate = startDate
+	endDate, _  := time.Parse(time.RFC822, "31 Dec 16 11:59 UTC")
+	double.EndDate = endDate
 	
+	jsonAsBytes, _ = json.Marshal(double)
+	err = stub.PutState(DOUBLE, jsonAsBytes)								
+	if err != nil {
+		fmt.Println("Error creating double contract")
+		return nil, err
+	}
+
 	//BANK A
 	var fid FinancialInst
 	fid.Owner = BANKA
@@ -432,7 +449,8 @@ func (t *SimpleChaincode) submitTx(stub *shim.ChaincodeStub, args []string) ([]b
 	
 	var tx Transaction
 	tx.RefNumber 	= args[0]
-	tx.Date 		= args[1]
+	startDate, _  := time.Parse(time.RFC822, args[1])
+	tx.Date 		= startDate
 	tx.Description 	= args[2]
 	tx.Type 	    = args[3]
 	tx.To 			= args[5]
@@ -504,25 +522,59 @@ func standardContract(tx Transaction, stub *shim.ChaincodeStub) float64 {
   
 }
 
+func doubleContract(tx Transaction, stub *shim.ChaincodeStub) float64 {
+  
+  	//get the AllTransactions index
+	contractAsBytes, err := stub.GetState(DOUBLE)
+	if err != nil {
+		return -99
+	}
+	var contract Contract
+	json.Unmarshal(contractAsBytes, &contract)
+	
+	var pointsToTransfer float64
+	pointsToTransfer = tx.Amount
+	if (tx.Date.After(contract.StartDate) && tx.Date.Before(contract.EndDate)) {
+	     pointsToTransfer = pointsToTransfer * 2
+	}
+ 
+ 
+  return pointsToTransfer
+  
+  
+}
+
+
+func feedbackContract(tx Transaction, stub *shim.ChaincodeStub) float64 {
+  
+  
+  var pointsToTransfer float64
+  pointsToTransfer = 1000
+  return pointsToTransfer
+  
+  
+}
+
 // ============================================================================================================================
 func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 
 	fmt.Println("Running transferPoints")
-	currentDateStr := time.Now().Format(time.RFC850)
+	currentDateStr := time.Now().Format(time.RFC822)
+	startDate, _  := time.Parse(time.RFC822, currentDateStr)
 
 	
 	var tx Transaction
-	tx.Date 		=  currentDateStr
+	tx.Date 		= startDate
 	tx.To 			= args[0]
 	tx.From 		= args[1]
 	tx.Type 	    = args[2]
 	tx.Description 	= args[3]
-	tx.ContractId 	= "0"
+	tx.ContractId 	= args[4]
 	tx.StatusCode 	= 1
 	tx.StatusMsg 	= "Transaction Completed"
 	
 	
-	amountValue, err := strconv.ParseFloat(args[4], 64)
+	amountValue, err := strconv.ParseFloat(args[5], 64)
 	if err != nil {
 		tx.StatusCode = 0
 		tx.StatusMsg = "Invalid Amount"
@@ -530,7 +582,7 @@ func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string
 		tx.Amount = amountValue
 	}
 	
-	moneyValue, err := strconv.ParseFloat(args[5], 64)
+	moneyValue, err := strconv.ParseFloat(args[6], 64)
 	if err != nil {
 		tx.StatusCode = 0
 		tx.StatusMsg = "Invalid Amount"
@@ -560,6 +612,10 @@ func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string
 	var pointsToTransfer float64
 	if (tx.ContractId == STANDARD) {
 		pointsToTransfer = standardContract(tx, stub)
+	} else if (tx.ContractId == DOUBLE) {
+		pointsToTransfer = doubleContract(tx, stub)
+	} else if (tx.ContractId == FEEDBACK) {
+		pointsToTransfer = feedbackContract(tx, stub)
 	}
 	
 	//***************************************************************
