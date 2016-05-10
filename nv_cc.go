@@ -516,7 +516,7 @@ func standardContract(tx Transaction, stub *shim.ChaincodeStub) float64 {
   
   
   var pointsToTransfer float64
-  pointsToTransfer = tx.Amount
+  pointsToTransfer = tx.Amount * -1
   return pointsToTransfer
   
   
@@ -549,7 +549,7 @@ func feedbackContract(tx Transaction, stub *shim.ChaincodeStub) float64 {
   
   
   var pointsToTransfer float64
-  pointsToTransfer = 1000
+  pointsToTransfer = 1000 * 5
   return pointsToTransfer
   
   
