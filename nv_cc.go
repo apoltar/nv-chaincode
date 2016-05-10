@@ -516,7 +516,7 @@ func standardContract(tx Transaction, stub *shim.ChaincodeStub) float64 {
   
   
   var pointsToTransfer float64
-  pointsToTransfer = tx.Amount * -1
+  pointsToTransfer = tx.Amount / 2
   return pointsToTransfer
   
   
@@ -533,9 +533,9 @@ func doubleContract(tx Transaction, stub *shim.ChaincodeStub) float64 {
 	json.Unmarshal(contractAsBytes, &contract)
 	
 	var pointsToTransfer float64
-	pointsToTransfer = tx.Amount * 3
+	pointsToTransfer = tx.Amount
 	if (tx.Date.After(contract.StartDate) && tx.Date.Before(contract.EndDate)) {
-	     pointsToTransfer = pointsToTransfer * 2
+	     pointsToTransfer = pointsToTransfer *-1
 	}
  
  
