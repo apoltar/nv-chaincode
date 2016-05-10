@@ -333,6 +333,8 @@ func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args 
 	if args[0] == "getNVAccounts" { return t.getNVAccounts(stub, args[1]) }
 	if args[0] == "getTxs" { return t.getTxs(stub, args[1]) }
 	if args[0] == "getUserAccount" { return t.getUserAccount(stub, args[1]) }
+	if args[0] == "getContractDetails" { return t.getContractDetails(stub, args[1]) }
+	
 
 	return nil, nil										
 }
@@ -565,13 +567,12 @@ func doubleContract(tx Transaction, stub *shim.ChaincodeStub) float64 {
   
 }
 
-func getContractDetails(contractId string, stub *shim.ChaincodeStub) Contract  {
+func (t *SimpleChaincode) getContractDetails(stub *shim.ChaincodeStub, contractId string)([]byte, error)  {
 
 	contractAsBytes, _ := stub.GetState(contractId)
-	var contract Contract
-	json.Unmarshal(contractAsBytes, &contract)
 
-	return contract
+
+	return contractAsBytes, nil
 
 }
 
