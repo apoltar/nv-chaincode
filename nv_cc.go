@@ -47,12 +47,15 @@ type SimpleChaincode struct {
 
 
 // New structs for API demo
+// Add new types - earn, redeem, transfer, bonus
+// update the member numbers, description, points activities variation, etc. 
 type Transaction struct {
 	RefNumber   string   `json:"RefNumber"`
 	Date 		string   `json:"Date"`
 	Description string   `json:"description"`
 	Type 		string   `json:"Type"`
 	Amount    	float64  `json:"Amount"`
+	Money    	float64  `json:"Money"`
 	To			string   `json:"ToUserid"`
 	From		string   `json:"FromUserid"`
 	ToName	    string   `json:"ToName"`
@@ -110,7 +113,7 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 		
 	// Create the 'Bank' user and add it to the blockchain
 	var bank User
-	bank.UserId = "1";
+	bank.UserId = "B1928564";
 	bank.Name = "Open Financial Network"
 	bank.Balance = 1000000
 	bank.Status  = "Originator"
@@ -128,7 +131,7 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	
     // Create the 'Travel Agency' user and add it to the blockchain
 	var travel User
-	travel.UserId = "2";
+	travel.UserId = "T5940872";
 	travel.Name = "Open Travel Network"
 	travel.Balance = 500000
 	travel.Status  = "Member"
@@ -146,7 +149,7 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	
 	// Create the 'Natalie' user and add her to the blockchain
 	var natalie User
-	natalie.UserId = "3";
+	natalie.UserId = "U2974034";
 	natalie.Name = "Natalie"
 	natalie.Balance = 1000
 	natalie.Status  = "Platinum"
@@ -164,7 +167,7 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	
 	// Create the 'Anthony' user and add him to the blockchain
 	var anthony User
-	anthony.UserId = "4";
+	anthony.UserId = "U3151672";
 	anthony.Name = "Anthony"
 	anthony.Balance = 500
 	anthony.Status  = "Silver"
@@ -189,19 +192,19 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	
 	// Create current reference number if necessary
 	var refNumber int
-	refNumberBytes, numErr := stub.GetState("refNumber")
-	if numErr != nil {
+	//refNumberBytes, numErr := stub.GetState("refNumber")
+	//if numErr != nil {
 	
-		refNumber = 1
+		refNumber = 2985674978
 		jsonAsBytes, _ = json.Marshal(refNumber)
 		err = stub.PutState("refNumber", jsonAsBytes)								
 		if err != nil {
 			fmt.Println("Error Creating reference number")
 			return nil, err
 		}
-	} else {
-		err = json.Unmarshal(refNumberBytes, &refNumber)
-	}
+	//} else {
+	//	err = json.Unmarshal(refNumberBytes, &refNumber)
+	//}
 	
 
 
@@ -483,23 +486,30 @@ func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string
 
 	
 	var tx Transaction
-	//tx.RefNumber 	= "1000"
 	tx.Date 		=  currentDateStr
-	tx.Description 	= "PointsTransfer"
-	tx.Type 	    = "Valid"
 	tx.To 			= args[0]
 	tx.From 		= args[1]
+	tx.Type 	    = args[2]
+	tx.Description 	= args[3]
 	tx.Contract 	= "Standard"
 	tx.StatusCode 	= 1
 	tx.StatusMsg 	= "Transaction Completed"
 	
 	
-	amountValue, err := strconv.ParseFloat(args[2], 64)
+	amountValue, err := strconv.ParseFloat(args[4], 64)
 	if err != nil {
 		tx.StatusCode = 0
 		tx.StatusMsg = "Invalid Amount"
 	}else{
 		tx.Amount = amountValue
+	}
+	
+	moneyValue, err := strconv.ParseFloat(args[5], 64)
+	if err != nil {
+		tx.StatusCode = 0
+		tx.StatusMsg = "Invalid Amount"
+	}else{
+		tx.Money = moneyValue
 	}
 	
 	
