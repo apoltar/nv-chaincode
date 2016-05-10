@@ -66,6 +66,19 @@ type Transaction struct {
 }
 
 
+type Contract struct {
+	Id			string   `json:"ID"`
+	Title		string   `json:"Title"`
+	Description string   `json:"Description"`
+	Conditions  []string `json:"Conditions"`
+	Icon        string 	 `json:"Icon"`
+	StartDate   string   `json:"StartDate"`
+	EndDate		string   `json:"EndDate"`
+	Method	    string   `json:"Method"`
+}
+
+
+
 type User struct {
 	UserId		string   `json:"UserId"`
 	Name   		string   `json:"Name"`
