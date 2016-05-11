@@ -40,7 +40,6 @@ const AUDEUR = 0.67
 const EURAUD = 1.48
 const TESTCONV= 1.13
 
-const STANDARD_CONTRACT = "0"
 const DOUBLE_CONTRACT   = "C289416"
 const FEEDBACK_CONTRACT = "C791594"
 
@@ -275,7 +274,6 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 
 	
 	var contractIds []string
-	contractIds= append(contractIds, STANDARD_CONTRACT);
 	contractIds= append(contractIds, DOUBLE_CONTRACT);
 	contractIds= append(contractIds, FEEDBACK_CONTRACT);
 	
@@ -534,37 +532,7 @@ func (t *SimpleChaincode) submitTx(stub *shim.ChaincodeStub, args []string) ([]b
 	//***********************************************************************
 }
 
-func standardContract(tx Transaction, stub *shim.ChaincodeStub) float64 {
-  
-  
-  var pointsToTransfer float64
-  pointsToTransfer = tx.Amount
-  return pointsToTransfer
-  
-  
-}
 
-func doubleContract(tx Transaction, stub *shim.ChaincodeStub) float64 {
-
-
-	contractAsBytes, err := stub.GetState(DOUBLE_CONTRACT)
-	if err != nil {
-		return -99
-	}
-	var contract Contract
-	json.Unmarshal(contractAsBytes, &contract)
-	
-	var pointsToTransfer float64
-	pointsToTransfer = tx.Amount
-	if (tx.Date.After(contract.StartDate) && tx.Date.Before(contract.EndDate)) {
-	     pointsToTransfer = pointsToTransfer * 2
-	}
- 
- 
-  return pointsToTransfer
-  
-  
-}
 
 func (t *SimpleChaincode) getContractDetails(stub *shim.ChaincodeStub, contractId string)([]byte, error)  {
 
@@ -595,6 +563,27 @@ func (t *SimpleChaincode) getAllContracts(stub *shim.ChaincodeStub)([]byte, erro
 }
 
 
+func doubleContract(tx Transaction, stub *shim.ChaincodeStub) float64 {
+
+
+	contractAsBytes, err := stub.GetState(DOUBLE_CONTRACT)
+	if err != nil {
+		return -99
+	}
+	var contract Contract
+	json.Unmarshal(contractAsBytes, &contract)
+	
+	var pointsToTransfer float64
+	pointsToTransfer = tx.Amount
+	if (tx.Date.After(contract.StartDate) && tx.Date.Before(contract.EndDate)) {
+	     pointsToTransfer = pointsToTransfer * 2
+	}
+ 
+ 
+  return pointsToTransfer
+  
+  
+}
 
 func feedbackContract(tx Transaction, stub *shim.ChaincodeStub) float64 {
   
@@ -673,9 +662,7 @@ func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string
 	}
 	
 	// Determine point amount to transfer based on contract type
-	if (tx.ContractId == STANDARD_CONTRACT) {
-		tx.Amount = standardContract(tx, stub)
-	} else if (tx.ContractId == DOUBLE_CONTRACT) {
+	if (tx.ContractId == DOUBLE_CONTRACT) {
 		tx.Amount = doubleContract(tx, stub)
 	} else if (tx.ContractId == FEEDBACK_CONTRACT) {
 		tx.Amount = feedbackContract(tx, stub)
