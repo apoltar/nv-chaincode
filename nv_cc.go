@@ -72,6 +72,8 @@ type Transaction struct {
 
 type Contract struct {
 	Id			string   `json:"ID"`
+	BusinessId  string   `json:"BusinessId"`
+	BusinessName string   `json:"BusinessName"`
 	Title		string   `json:"Title"`
 	Description string   `json:"Description"`
 	Conditions  []string `json:"Conditions"`
@@ -224,14 +226,18 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	
 	var double Contract
 
+
 	double.Id = DOUBLE_CONTRACT
-	double.Title = "Double Points"
-	double.Description = "Earn double points when you shop during promotion periods"
-	double.Conditions = append(double.Conditions, "Member of Open Points")
+	double.BusinessId  = "B1928564"
+	double.BusinessName = "Open Financial Network"
+	double.Title = "Double Points using OpenFN Credit Card"
+	double.Description = "Earn double points on dining and selected travel activities using registered OpenFN credit card"
+	double.Conditions = append(double.Conditions, "2x points for dinning and activities")
+	double.Conditions = append(double.Conditions, "Valid from May 11, 2016") 
 	double.Icon = ""
 	double.Method = "doubleContract"
 	
-	startDate, _  := time.Parse(time.RFC822, "01 Jan 16 10:00 UTC")
+	startDate, _  := time.Parse(time.RFC822, "11 May 16 12:00 UTC")
 	double.StartDate = startDate
 	endDate, _  := time.Parse(time.RFC822, "31 Dec 16 11:59 UTC")
 	double.EndDate = endDate
@@ -244,15 +250,18 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	}
 	
 	
-   var feedback Contract
-
+    var feedback Contract
 	feedback.Id = FEEDBACK_CONTRACT
-	feedback.Title = "Points for Feedback"
-	feedback.Description = "Earn points when you submit feedback regarding your travel experience"
-	feedback.Conditions = append(feedback.Conditions, "Member of Open Points")
+	feedback.BusinessId  = "T5940872"
+	feedback.BusinessName = "Open Travel Network"
+	feedback.Title = "Points for Feedback by Travel App"
+	feedback.Description = "Earn points by telling your thoughts on travel package and activities"
+	feedback.Conditions = append(feedback.Conditions, "1,000 points for feedback on travel package ")
+	feedback.Conditions = append(feedback.Conditions, "100 points for feedback on each travel activity")
+	feedback.Conditions = append(feedback.Conditions, "Valid from May 11, 2016")
 	feedback.Icon = ""
 	feedback.Method = "feedbackContract"
-	startDate, _  = time.Parse(time.RFC822, "01 Jan 16 10:00 UTC")
+	startDate, _  = time.Parse(time.RFC822, "11 May 16 12:00 UTC")
 	feedback.StartDate = startDate
 	endDate, _  = time.Parse(time.RFC822, "31 Dec 16 11:59 UTC")
 	feedback.EndDate = endDate
