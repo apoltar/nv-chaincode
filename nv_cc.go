@@ -273,6 +273,20 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 		return nil, err
 	}
 
+	
+	var contractIds []string
+	contractIds= append(contractIds, STANDARD_CONTRACT);
+	contractIds= append(contractIds, DOUBLE_CONTRACT);
+	contractIds= append(contractIds, FEEDBACK_CONTRACT);
+	
+	jsonAsBytes, _ = json.Marshal(contractIds)
+	err = stub.PutState("contractIds", jsonAsBytes)								
+	if err != nil {
+		fmt.Println("Error storing contract Ids on blockchain")
+		return nil, err
+	}
+
+	
 	return nil, nil
 }
 
@@ -309,7 +323,7 @@ func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args 
 
 	if len(args) != 2 { return nil, errors.New("Incorrect number of arguments passed") }
 
-	if args[0] != "getFIDetails" && args[0] != "getTxs" && args[0] != "getNVAccounts"&& args[0] != "getUserAccount"  && args[0] != "getContractDetails"{
+	if args[0] != "getFIDetails" && args[0] != "getTxs" && args[0] != "getNVAccounts"&& args[0] != "getUserAccount"  && args[0] != "getContractDetails"  && args[0] != "getAllContracts"{
 		return nil, errors.New("Invalid query function name.")
 	}
 
@@ -318,6 +332,7 @@ func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args 
 	if args[0] == "getTxs" { return t.getTxs(stub, args[1]) }
 	if args[0] == "getUserAccount" { return t.getUserAccount(stub, args[1]) }
 	if args[0] == "getContractDetails" { return t.getContractDetails(stub, args[1]) }
+	if args[0] == "getAllContracts" { return t.getAllContracts(stub) }
 	
 
 	return nil, nil										
@@ -557,6 +572,25 @@ func (t *SimpleChaincode) getContractDetails(stub *shim.ChaincodeStub, contractI
 
 
 	return contractAsBytes, nil
+
+}
+
+func (t *SimpleChaincode) getAllContracts(stub *shim.ChaincodeStub)([]byte, error)  {
+
+	contractIdsAsBytes, _ := stub.GetState("contractIds")
+	var contractIds []string
+	json.Unmarshal(contractIdsAsBytes, &contractIds)
+	
+	var allContracts []Contract
+	for i := range contractIds{
+		contractAsBytes, _ := stub.GetState(contractIds[i])
+		var thisContract Contract
+		json.Unmarshal(contractAsBytes, &thisContract)
+		allContracts = append(allContracts, thisContract)
+	}
+
+	asBytes, _ := json.Marshal(allContracts)
+	return asBytes, nil
 
 }
 
