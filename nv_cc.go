@@ -773,7 +773,7 @@ func (t *SimpleChaincode) creditVostroAccount(stub *shim.ChaincodeStub, sender s
 	return nil, nil
 
 }
-
+ 
 func (t *SimpleChaincode) debitNostroAccount(stub *shim.ChaincodeStub, sender string, receiver string, amount float64) ([]byte, error) {
 
 	receiverBytes, err := stub.GetState(receiver)
@@ -784,7 +784,7 @@ func (t *SimpleChaincode) debitNostroAccount(stub *shim.ChaincodeStub, sender st
 	fmt.Println("DebitNostroAccount Unmarshalling Financial Institution");
 	err = json.Unmarshal(receiverBytes, &rfid)
 	if err != nil {
-		return nil, err
+		return nil, err 
 	}
 
 	for i := range rfid.Accounts{
