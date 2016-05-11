@@ -40,9 +40,9 @@ const AUDEUR = 0.67
 const EURAUD = 1.48
 const TESTCONV= 1.13
 
-const STANDARD = "0"
-const DOUBLE   = "1"
-const FEEDBACK = "2"
+const STANDARD_CONTRACT = "0"
+const DOUBLE_CONTRACT   = "C289416"
+const FEEDBACK_CONTRACT = "C791594"
 
 // SimpleChaincode example simple Chaincode implementation
 type SimpleChaincode struct {
@@ -126,8 +126,6 @@ type FinancialInst struct {
 func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 
 	var err error
-
-	
 	
 	// Create the 'Bank' user and add it to the blockchain
 	var bank User
@@ -226,10 +224,10 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	
 	var double Contract
 
-	double.Id = DOUBLE
+	double.Id = DOUBLE_CONTRACT
 	double.Title = "Double Points"
 	double.Description = "Earn double points when you shop during promotion periods"
-	double.Conditions = append(double.Conditions, "test condition")
+	double.Conditions = append(double.Conditions, "Member of Open Points")
 	double.Icon = ""
 	double.Method = "doubleContract"
 	
@@ -239,7 +237,7 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	double.EndDate = endDate
 	
 	jsonAsBytes, _ = json.Marshal(double)
-	err = stub.PutState(DOUBLE, jsonAsBytes)								
+	err = stub.PutState(DOUBLE_CONTRACT, jsonAsBytes)								
 	if err != nil {
 		fmt.Println("Error creating double contract")
 		return nil, err
@@ -248,10 +246,10 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	
    var feedback Contract
 
-	feedback.Id = FEEDBACK
+	feedback.Id = FEEDBACK_CONTRACT
 	feedback.Title = "Points for Feedback"
 	feedback.Description = "Earn points when you submit feedback regarding your travel experience"
-	feedback.Conditions = append(double.Conditions, "test condition")
+	feedback.Conditions = append(feedback.Conditions, "Member of Open Points")
 	feedback.Icon = ""
 	feedback.Method = "feedbackContract"
 	startDate, _  = time.Parse(time.RFC822, "01 Jan 16 10:00 UTC")
@@ -260,35 +258,12 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	feedback.EndDate = endDate
 	
 	jsonAsBytes, _ = json.Marshal(feedback)
-	err = stub.PutState(FEEDBACK, jsonAsBytes)								
+	err = stub.PutState(FEEDBACK_CONTRACT, jsonAsBytes)								
 	if err != nil {
 		fmt.Println("Error creating feedback contract")
 		return nil, err
 	}
 
-	//BANK A
-	var fid FinancialInst
-	fid.Owner = BANKA
-	
-	var actAB Account
-	actAB.Holder = BANKB
-	actAB.Currency = "USD"
-	actAB.CashBalance = 250000
-	fid.Accounts = append(fid.Accounts, actAB)
-	var actAC Account
-	actAC.Holder = BANKC
-	actAC.Currency = "USD"
-	actAC.CashBalance = 300000
-	fid.Accounts = append(fid.Accounts, actAC)
-
-	jsonAsBytes, _ = json.Marshal(fid)
-	err = stub.PutState("BANKA", jsonAsBytes)								
-	if err != nil {
-		fmt.Println("Error creating account "+BANKA)
-		return nil, err
-	}
-
-	
 	return nil, nil
 }
 
@@ -546,9 +521,9 @@ func standardContract(tx Transaction, stub *shim.ChaincodeStub) float64 {
 }
 
 func doubleContract(tx Transaction, stub *shim.ChaincodeStub) float64 {
-  
-  	//get the AllTransactions index
-	contractAsBytes, err := stub.GetState(DOUBLE)
+
+
+	contractAsBytes, err := stub.GetState(DOUBLE_CONTRACT)
 	if err != nil {
 		return -99
 	}
@@ -580,9 +555,8 @@ func (t *SimpleChaincode) getContractDetails(stub *shim.ChaincodeStub, contractI
 
 func feedbackContract(tx Transaction, stub *shim.ChaincodeStub) float64 {
   
-  
-    //get the AllTransactions index
-	contractAsBytes, err := stub.GetState(FEEDBACK)
+
+	contractAsBytes, err := stub.GetState(FEEDBACK_CONTRACT)
 	if err != nil {
 		return -99
 	}
@@ -656,11 +630,11 @@ func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string
 	}
 	
 	// Determine point amount to transfer based on contract type
-	if (tx.ContractId == STANDARD) {
+	if (tx.ContractId == STANDARD_CONTRACT) {
 		tx.Amount = standardContract(tx, stub)
-	} else if (tx.ContractId == DOUBLE) {
+	} else if (tx.ContractId == DOUBLE_CONTRACT) {
 		tx.Amount = doubleContract(tx, stub)
-	} else if (tx.ContractId == FEEDBACK) {
+	} else if (tx.ContractId == FEEDBACK_CONTRACT) {
 		tx.Amount = feedbackContract(tx, stub)
 	}
 	
