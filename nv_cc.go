@@ -218,7 +218,7 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 		return nil, err
 	}
 
-	maxTime := time.Unix(1<<63-1, 0)
+	
 	// Create contract metadata for double points and add it to the blockchain
 	var double Contract
 	double.Id = DOUBLE_CONTRACT
@@ -233,8 +233,8 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	
 	startDate, _  := time.Parse(time.RFC822, "11 May 16 12:00 UTC")
 	double.StartDate = startDate
-	//endDate, _  := time.Parse(time.RFC822, "31 Dec 16 11:59 UTC")
-	double.EndDate = maxTime
+	endDate, _  := time.Parse(time.RFC822, "31 Dec 60 11:59 UTC")
+	double.EndDate = endDate
 	
 	jsonAsBytes, _ = json.Marshal(double)
 	err = stub.PutState(DOUBLE_CONTRACT, jsonAsBytes)								
@@ -258,8 +258,8 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	feedback.Method = "feedbackContract"
 	startDate, _  = time.Parse(time.RFC822, "11 May 16 12:00 UTC")
 	feedback.StartDate = startDate
-	//endDate, _  = time.Parse(time.RFC822, "31 Dec 16 11:59 UTC")
-	feedback.EndDate = maxTime
+	endDate, _  = time.Parse(time.RFC822, "31 Dec 60 11:59 UTC")
+	feedback.EndDate = endDate
 	
 	jsonAsBytes, _ = json.Marshal(feedback)
 	err = stub.PutState(FEEDBACK_CONTRACT, jsonAsBytes)								
