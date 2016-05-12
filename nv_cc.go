@@ -233,7 +233,7 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	
 	startDate, _  := time.Parse(time.RFC822, "11 May 16 12:00 UTC")
 	double.StartDate = startDate
-	endDate, _  := time.Parse(time.RFC822, "31 Dec 99 11:59 UTC")
+	endDate, _  := time.Parse(time.RFC822, "31 Dec 16 11:59 UTC")
 	double.EndDate = endDate
 	
 	jsonAsBytes, _ = json.Marshal(double)
@@ -258,7 +258,7 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	feedback.Method = "feedbackContract"
 	startDate, _  = time.Parse(time.RFC822, "11 May 16 12:00 UTC")
 	feedback.StartDate = startDate
-	endDate, _  = time.Parse(time.RFC822, "31 Dec 99 11:59 UTC")
+	endDate, _  = time.Parse(time.RFC822, "31 Dec 16 11:59 UTC")
 	feedback.EndDate = endDate
 	
 	jsonAsBytes, _ = json.Marshal(feedback)
