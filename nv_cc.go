@@ -49,9 +49,7 @@ type SimpleChaincode struct {
 
 
 
-// New structs for API demo
-// Add new types - earn, redeem, transfer, bonus
-// update the member numbers, description, points activities variation, etc. 
+// Blockchain point transaction records
 type Transaction struct {
 	RefNumber   string   `json:"RefNumber"`
 	Date 		time.Time   `json:"Date"`
@@ -59,6 +57,7 @@ type Transaction struct {
 	Type 		string   `json:"Type"`
 	Amount    	float64  `json:"Amount"`
 	Money    	float64  `json:"Money"`
+	Activities  int      `json:"FeedbackActivitiesDone"`
 	To			string   `json:"ToUserid"`
 	From		string   `json:"FromUserid"`
 	ToName	    string   `json:"ToName"`
@@ -69,6 +68,7 @@ type Transaction struct {
 }
 
 
+// Smart contract metadata record
 type Contract struct {
 	Id			string   `json:"ID"`
 	BusinessId  string   `json:"BusinessId"`
@@ -84,6 +84,7 @@ type Contract struct {
 
 
 
+// Open Points Network member record
 type User struct {
 	UserId		string   `json:"UserId"`
 	Name   		string   `json:"Name"`
@@ -95,15 +96,13 @@ type User struct {
 }
 
 
-// Old structs from NV demo - to be deleted 
+// Array for storing all open points transactions
 type AllTransactions struct{
 	Transactions []Transaction `json:"transactions"`
 }
 
-type AllUsers struct{
-	User []User `json:"users"`
-}
 
+// Old structs from NV demo - to be deleted 
 type NVAccounts struct {
 	User 		[]User `json:"user"`
 	Vostro 		[]FinancialInst `json:"vostro"`
@@ -200,6 +199,7 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	}
 	
 	
+	// Create an array for storing all transactions, and store the array on the blockchain
 	var transactions AllTransactions
 	jsonAsBytes, _ = json.Marshal(transactions)
 	err = stub.PutState("allTx", jsonAsBytes)
@@ -207,25 +207,20 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 		return nil, err
 	}
 	
-	// Create current reference number if necessary
+	// Create transaction reference number and store it on the blockchain
 	var refNumber int
-	//refNumberBytes, numErr := stub.GetState("refNumber")
-	//if numErr != nil {
 	
-		refNumber = 2985674978
-		jsonAsBytes, _ = json.Marshal(refNumber)
-		err = stub.PutState("refNumber", jsonAsBytes)								
-		if err != nil {
-			fmt.Println("Error Creating reference number")
-			return nil, err
-		}
-	//} else {
-	//	err = json.Unmarshal(refNumberBytes, &refNumber)
-	//}
+	refNumber = 2985674978
+	jsonAsBytes, _ = json.Marshal(refNumber)
+	err = stub.PutState("refNumber", jsonAsBytes)								
+	if err != nil {
+		fmt.Println("Error Creating reference number")
+		return nil, err
+	}
+
 	
+	// Create contract metadata for double points and add it to the blockchain
 	var double Contract
-
-
 	double.Id = DOUBLE_CONTRACT
 	double.BusinessId  = "B1928564"
 	double.BusinessName = "Open Financial Network"
@@ -238,7 +233,7 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	
 	startDate, _  := time.Parse(time.RFC822, "11 May 16 12:00 UTC")
 	double.StartDate = startDate
-	endDate, _  := time.Parse(time.RFC822, "31 Dec 16 11:59 UTC")
+	endDate, _  := time.Parse(time.RFC822, "31 Dec 99 11:59 UTC")
 	double.EndDate = endDate
 	
 	jsonAsBytes, _ = json.Marshal(double)
@@ -249,6 +244,7 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	}
 	
 	
+	// Create contract metadata for feedback points and add it to the blockchain
     var feedback Contract
 	feedback.Id = FEEDBACK_CONTRACT
 	feedback.BusinessId  = "T5940872"
@@ -262,7 +258,7 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	feedback.Method = "feedbackContract"
 	startDate, _  = time.Parse(time.RFC822, "11 May 16 12:00 UTC")
 	feedback.StartDate = startDate
-	endDate, _  = time.Parse(time.RFC822, "31 Dec 16 11:59 UTC")
+	endDate, _  = time.Parse(time.RFC822, "31 Dec 99 11:59 UTC")
 	feedback.EndDate = endDate
 	
 	jsonAsBytes, _ = json.Marshal(feedback)
@@ -273,9 +269,10 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	}
 
 	
+	// Create an array of contract ids to keep track of all contracts
 	var contractIds []string
-	contractIds= append(contractIds, DOUBLE_CONTRACT);
-	contractIds= append(contractIds, FEEDBACK_CONTRACT);
+	contractIds = append(contractIds, DOUBLE_CONTRACT);
+	contractIds = append(contractIds, FEEDBACK_CONTRACT);
 	
 	jsonAsBytes, _ = json.Marshal(contractIds)
 	err = stub.PutState("contractIds", jsonAsBytes)								
@@ -338,7 +335,7 @@ func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args 
 
 
 // ============================================================================================================================
-// Get Financial Institution Details
+// Get Financial Institution Details - TO BE DELETED
 // ============================================================================================================================
 func (t *SimpleChaincode) getFinInstDetails(stub *shim.ChaincodeStub, finInst string)([]byte, error){
 	
@@ -356,7 +353,7 @@ func (t *SimpleChaincode) getFinInstDetails(stub *shim.ChaincodeStub, finInst st
 }
 
 // ============================================================================================================================
-// Get Nostro/Vostro accounts for a specific Financial Institution
+// Get Nostro/Vostro accounts for a specific Financial Institution - TO BE DELETED
 // ============================================================================================================================
 func (t *SimpleChaincode) getNVAccounts(stub *shim.ChaincodeStub, finInst string)([]byte, error){
 	
@@ -395,6 +392,8 @@ func (t *SimpleChaincode) getNVAccounts(stub *shim.ChaincodeStub, finInst string
 }
 
 // ============================================================================================================================
+// Get Open Points member account from the blockchain
+// ============================================================================================================================
 func (t *SimpleChaincode) getUserAccount(stub *shim.ChaincodeStub, userId string)([]byte, error){
 	
 	fmt.Println("Start getUserAccount")
@@ -411,7 +410,7 @@ func (t *SimpleChaincode) getUserAccount(stub *shim.ChaincodeStub, userId string
 }
 
 // ============================================================================================================================
-// Get Transactions for a specific Financial Institution (Inbound and Outbound)
+// Get all transactions that involve a particular user
 // ============================================================================================================================
 func (t *SimpleChaincode) getTxs(stub *shim.ChaincodeStub, userId string)([]byte, error){
 	
@@ -450,17 +449,7 @@ func (t *SimpleChaincode) getTxs(stub *shim.ChaincodeStub, userId string)([]byte
 
 
 // ============================================================================================================================
-// Submit Transaction
-	// RefNumber   string   `json:"refNumber"`
-	// OpCode 		string   `json:"opCode"`
-	// VDate 		string   `json:"vDate"`
-	// Currency  	string   `json:"currency"`
-	// Amount    	float64  `json:"amount"`
-	// From		string   `json:"From"`
-	// To	string   `json:"To"`
-	// OrdCust		string   `json:"ordcust"`
-	// BenefCust	string   `json:"benefcust"`
-	// DetCharges  string   `json:"detcharges"`
+// Submit Transaction - TO BE DELETED
 // ============================================================================================================================
 func (t *SimpleChaincode) submitTx(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 
@@ -533,7 +522,9 @@ func (t *SimpleChaincode) submitTx(stub *shim.ChaincodeStub, args []string) ([]b
 }
 
 
-
+// ============================================================================================================================
+// Get the contract metadata of a single smart contract from the blockchain
+// ============================================================================================================================
 func (t *SimpleChaincode) getContractDetails(stub *shim.ChaincodeStub, contractId string)([]byte, error)  {
 
 	contractAsBytes, _ := stub.GetState(contractId)
@@ -543,6 +534,9 @@ func (t *SimpleChaincode) getContractDetails(stub *shim.ChaincodeStub, contractI
 
 }
 
+// ============================================================================================================================
+// Get the contract metadata of all contracts from the blockchain
+// ============================================================================================================================
 func (t *SimpleChaincode) getAllContracts(stub *shim.ChaincodeStub)([]byte, error)  {
 
 	contractIdsAsBytes, _ := stub.GetState("contractIds")
@@ -562,7 +556,9 @@ func (t *SimpleChaincode) getAllContracts(stub *shim.ChaincodeStub)([]byte, erro
 
 }
 
-
+// ============================================================================================================================
+// Smart contract for giving user double points
+// ============================================================================================================================
 func doubleContract(tx Transaction, stub *shim.ChaincodeStub) float64 {
 
 
@@ -585,6 +581,10 @@ func doubleContract(tx Transaction, stub *shim.ChaincodeStub) float64 {
   
 }
 
+
+// ============================================================================================================================
+// Smart contract for giving user points for completing feedback surveys
+// ============================================================================================================================
 func feedbackContract(tx Transaction, stub *shim.ChaincodeStub) float64 {
   
 
@@ -599,6 +599,10 @@ func feedbackContract(tx Transaction, stub *shim.ChaincodeStub) float64 {
 	pointsToTransfer = 0
 	if (tx.Date.After(contract.StartDate) && tx.Date.Before(contract.EndDate)) {
 	     pointsToTransfer = 1000
+		 
+		 if (tx.Activities > 0) {
+			pointsToTransfer = pointsToTransfer + float64(tx.Activities)*100
+		 }
 	}
   
   
@@ -607,6 +611,8 @@ func feedbackContract(tx Transaction, stub *shim.ChaincodeStub) float64 {
   
 }
 
+// ============================================================================================================================
+// Transfer points between members of the Open Points Network
 // ============================================================================================================================
 func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 
@@ -622,11 +628,13 @@ func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string
 	tx.Type 	    = args[2]
 	tx.Description 	= args[3]
 	tx.ContractId 	= args[4]
+	activities, _  := strconv.Atoi(args[5])
+	tx.Activities   = activities
 	tx.StatusCode 	= 1
 	tx.StatusMsg 	= "Transaction Completed"
 	
 	
-	amountValue, err := strconv.ParseFloat(args[5], 64)
+	amountValue, err := strconv.ParseFloat(args[6], 64)
 	if err != nil {
 		tx.StatusCode = 0
 		tx.StatusMsg = "Invalid Amount"
@@ -634,7 +642,7 @@ func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string
 		tx.Amount = amountValue
 	}
 	
-	moneyValue, err := strconv.ParseFloat(args[6], 64)
+	moneyValue, err := strconv.ParseFloat(args[7], 64)
 	if err != nil {
 		tx.StatusCode = 0
 		tx.StatusMsg = "Invalid Amount"
@@ -668,8 +676,8 @@ func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string
 		tx.Amount = feedbackContract(tx, stub)
 	}
 	
-	//***************************************************************
-	// Get Receiver account from BC
+
+	// Get Receiver account from BC and update point balance
 	rfidBytes, err := stub.GetState(tx.To)
 	if err != nil {
 		return nil, errors.New("transferPoints Failed to get Receiver from BC")
@@ -690,7 +698,7 @@ func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string
 		return nil, err
 	}
 	
-	// Get Sender account from BC
+	// Get Sender account from BC nd update point balance
 	rfidBytes, err = stub.GetState(tx.From)
 	if err != nil {
 		return nil, errors.New("transferPoints Failed to get Financial Institution")
@@ -717,7 +725,7 @@ func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string
 		return nil, errors.New("SubmitTx Failed to get all Transactions")
 	}
 
-	//Commit transaction to ledger
+	//Update transactions arrary and commit to BC
 	fmt.Println("SubmitTx Commit Transaction To Ledger");
 	var txs AllTransactions
 	json.Unmarshal(allTxAsBytes, &txs)
@@ -730,9 +738,11 @@ func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string
 	
 	
 	return nil, nil
-	//***********************************************************************
+
 }
 
+// ============================================================================================================================
+// Update Open Points memeber point balance
 // ============================================================================================================================
 func (t *SimpleChaincode) updateUserAccount(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 
@@ -766,6 +776,9 @@ func (t *SimpleChaincode) updateUserAccount(stub *shim.ChaincodeStub, args []str
 
 }
 
+// ============================================================================================================================
+// Old Function - TO BE DELETED
+// ============================================================================================================================
 func (t *SimpleChaincode) creditVostroAccount(stub *shim.ChaincodeStub, sender string, receiver string, amount float64) ([]byte, error) {
 
 	senderBytes, err := stub.GetState(sender)
@@ -795,6 +808,10 @@ func (t *SimpleChaincode) creditVostroAccount(stub *shim.ChaincodeStub, sender s
 
 }
  
+ 
+// ============================================================================================================================
+// Old Function - TO BE DELETED
+// ============================================================================================================================
 func (t *SimpleChaincode) debitNostroAccount(stub *shim.ChaincodeStub, sender string, receiver string, amount float64) ([]byte, error) {
 
 	receiverBytes, err := stub.GetState(receiver)
@@ -830,6 +847,10 @@ func main() {
 	}
 }
 
+
+// ============================================================================================================================
+// Old Function - TO BE DELETED
+// ============================================================================================================================
 func getFXRate(curS string, curR string) (float64, error){
 	if(curS == "USD" && curR == "AUD"){ return USDAUD,nil }
 	if(curS == "USD" && curR == "EUR"){ return USDEUR,nil }
@@ -840,6 +861,10 @@ func getFXRate(curS string, curR string) (float64, error){
 	return 0.0, errors.New("Not matching Currency")
 }
 
+
+// ============================================================================================================================
+// Old Function - TO BE DELETED
+// ============================================================================================================================
 func FloatToString(input_num float64) string {
     // to convert a float number to a string
     return strconv.FormatFloat(input_num, 'f', 4, 64)
