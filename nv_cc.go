@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 	"time"
+	"math"
 	"strconv"
 	"github.com/openblockchain/obc-peer/openchain/chaincode/shim"
 )
@@ -39,6 +40,7 @@ const USDEUR = 0.90
 const AUDEUR = 0.67
 const EURAUD = 1.48
 const TESTCONV= 1.13
+const NUM_TX_TO_RETURN = 27
 
 const DOUBLE_CONTRACT   = "C289416"
 const FEEDBACK_CONTRACT = "C791594"
@@ -130,7 +132,7 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	// Create the 'Bank' user and add it to the blockchain
 	var bank User
 	bank.UserId = "B1928564";
-	bank.Name = "Open Financial Network"
+	bank.Name = "OpenFN"
 	bank.Balance = 1000000
 	bank.Status  = "Originator"
 	bank.Expiration = "2099-12-31"
@@ -148,7 +150,7 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
     // Create the 'Travel Agency' user and add it to the blockchain
 	var travel User
 	travel.UserId = "T5940872";
-	travel.Name = "Open Travel Network"
+	travel.Name = "Open Travel"
 	travel.Balance = 500000
 	travel.Status  = "Member"
 	travel.Expiration = "2099-12-31"
@@ -226,7 +228,7 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	double.BusinessName = "Open Financial Network"
 	double.Title = "Double Points using OpenFN Credit Card"
 	double.Description = "Earn double points on dining and selected travel activities using registered OpenFN credit card"
-	double.Conditions = append(double.Conditions, "2x points for dinning and activities")
+	double.Conditions = append(double.Conditions, "2x points for dinning and travel activities")
 	double.Conditions = append(double.Conditions, "Valid from May 11, 2016") 
 	double.Icon = ""
 	double.Method = "doubleContract"
@@ -250,13 +252,13 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	feedback.BusinessId  = "T5940872"
 	feedback.BusinessName = "Open Travel Network"
 	feedback.Title = "Points for Feedback by Travel App"
-	feedback.Description = "Earn points by telling your thoughts on travel package and activities"
+	feedback.Description = "Earn points by sharing your thoughts on travel package and activities"
 	feedback.Conditions = append(feedback.Conditions, "1,000 points for feedback on travel package ")
 	feedback.Conditions = append(feedback.Conditions, "100 points for feedback on each travel activity")
-	feedback.Conditions = append(feedback.Conditions, "Valid from May 11, 2016")
+	feedback.Conditions = append(feedback.Conditions, "Valid from May 24, 2016")
 	feedback.Icon = ""
 	feedback.Method = "feedbackContract"
-	startDate, _  = time.Parse(time.RFC822, "11 May 16 12:00 UTC")
+	startDate, _  = time.Parse(time.RFC822, "24 May 16 12:00 UTC")
 	feedback.StartDate = startDate
 	endDate, _  = time.Parse(time.RFC822, "31 Dec 60 11:59 UTC")
 	feedback.EndDate = endDate
@@ -427,17 +429,17 @@ func (t *SimpleChaincode) getTxs(stub *shim.ChaincodeStub, userId string)([]byte
 
 	var txs AllTransactions
 	json.Unmarshal(allTxAsBytes, &txs)
-
-	for i := range txs.Transactions{
-
-		if txs.Transactions[i].From == userId{
+	numTxs := len(txs.Transactions)
+	numToReturn := int(math.Min(float64(numTxs), float64(NUM_TX_TO_RETURN)))
+	
+	for i := numTxs -1; i >= (numTxs - numToReturn); i-- {
+	    if txs.Transactions[i].From == userId{
 			res.Transactions = append(res.Transactions, txs.Transactions[i])
 		}
 
 		if txs.Transactions[i].To == userId{
 			res.Transactions = append(res.Transactions, txs.Transactions[i])
 		}
-
 	}
 
 	resAsBytes, _ := json.Marshal(res)
