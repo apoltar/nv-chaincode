@@ -224,7 +224,7 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	var double Contract
 	double.Id = DOUBLE_CONTRACT
 	double.BusinessId  = "B1928564"
-	double.BusinessName = "Open Financial Network"
+	double.BusinessName = "OpenFN"
 	double.Title = "Double Points using OpenFN Credit Card"
 	double.Description = "Earn double points on dining and selected travel activities using registered OpenFN credit card"
 	double.Conditions = append(double.Conditions, "2x points for dinning and travel activities")
@@ -249,8 +249,8 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
     var feedback Contract
 	feedback.Id = FEEDBACK_CONTRACT
 	feedback.BusinessId  = "T5940872"
-	feedback.BusinessName = "Open Travel Network"
-	feedback.Title = "Points for Feedback by Travel App"
+	feedback.BusinessName = "Open Travel"
+	feedback.Title = "Points for Feedback by Open Travel"
 	feedback.Description = "Earn points by sharing your thoughts on travel package and activities"
 	feedback.Conditions = append(feedback.Conditions, "1,000 points for feedback on travel package ")
 	feedback.Conditions = append(feedback.Conditions, "100 points for feedback on each travel activity")
