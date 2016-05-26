@@ -23,7 +23,6 @@ import (
 	"errors"
 	"fmt"
 	"time"
-	"math"
 	"strconv"
 	"github.com/openblockchain/obc-peer/openchain/chaincode/shim"
 )
@@ -430,9 +429,8 @@ func (t *SimpleChaincode) getTxs(stub *shim.ChaincodeStub, userId string)([]byte
 	var txs AllTransactions
 	json.Unmarshal(allTxAsBytes, &txs)
 	numTxs := len(txs.Transactions)
-	numToReturn := int(math.Min(float64(numTxs), float64(NUM_TX_TO_RETURN)))
-	
-	for i := numTxs -1; i >= (numTxs - numToReturn); i-- {
+	//numToReturn := int(math.Min(float64(numTxs), float64(NUM_TX_TO_RETURN)))
+	for i := numTxs -1; i >= 0; i-- {
 	    if txs.Transactions[i].From == userId{
 			res.Transactions = append(res.Transactions, txs.Transactions[i])
 		}
@@ -440,6 +438,8 @@ func (t *SimpleChaincode) getTxs(stub *shim.ChaincodeStub, userId string)([]byte
 		if txs.Transactions[i].To == userId{
 			res.Transactions = append(res.Transactions, txs.Transactions[i])
 		}
+		
+		if (len(res.Transactions) >= NUM_TX_TO_RETURN) { break }
 	}
 
 	resAsBytes, _ := json.Marshal(res)
