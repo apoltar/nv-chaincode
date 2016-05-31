@@ -90,6 +90,7 @@ type User struct {
 	UserId		string   `json:"UserId"`
 	Name   		string   `json:"Name"`
 	Balance 	float64  `json:"Balance"`
+	NumTxs 	    int      `json:"NumberOfTransactions"`
 	Status      string 	 `json:"Status"`
 	Expiration  string   `json:"ExpirationDate"`
 	Join		string   `json:"JoinDate"`
@@ -137,6 +138,8 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	bank.Expiration = "2099-12-31"
 	bank.Join  = "2015-01-01"
 	bank.Modified = "2016-05-06"
+	bank.NumTxs  = 0
+	
 	
 	jsonAsBytes, _ := json.Marshal(bank)
 	err = stub.PutState(bank.UserId, jsonAsBytes)								
@@ -155,6 +158,7 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	travel.Expiration = "2099-12-31"
 	travel.Join  = "2015-01-01"
 	travel.Modified = "2016-05-06"
+	travel.NumTxs  = 0
 	
 	jsonAsBytes, _ = json.Marshal(travel)
 	err = stub.PutState(travel.UserId, jsonAsBytes)								
@@ -173,6 +177,7 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	natalie.Expiration = "2017-06-01"
 	natalie.Join  = "2015-05-31"
 	natalie.Modified = "2016-05-06"
+	natalie.NumTxs  = 0
 	
 	jsonAsBytes, _ = json.Marshal(natalie)
 	err = stub.PutState(natalie.UserId, jsonAsBytes)								
@@ -191,6 +196,7 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	anthony.Expiration = "2017-03-15"
 	anthony.Join  = "2015-08-15"
 	anthony.Modified = "2016-04-17"
+	anthony.NumTxs  = 0
 	
 	jsonAsBytes, _ = json.Marshal(anthony)
 	err = stub.PutState(anthony.UserId, jsonAsBytes)								
@@ -225,8 +231,8 @@ func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte,
 	double.Id = DOUBLE_CONTRACT
 	double.BusinessId  = "B1928564"
 	double.BusinessName = "OpenFN"
-	double.Title = "Double Points using OpenFN Credit Card"
-	double.Description = "Earn double points on dining and selected travel activities using registered OpenFN credit card"
+	double.Title = "Double Points using OpenFN OpenPay"
+	double.Description = "Earn double points on dining and selected travel activities using OpenFN OpenPay"
 	double.Conditions = append(double.Conditions, "2x points for dinning and travel activities")
 	double.Conditions = append(double.Conditions, "Valid from May 11, 2016") 
 	double.Icon = ""
@@ -689,6 +695,7 @@ func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string
 	err = json.Unmarshal(rfidBytes, &receiver)
 	receiver.Balance = receiver.Balance  + tx.Amount
 	receiver.Modified = currentDateStr
+	receiver.NumTxs = receiver.NumTxs + 1
 	tx.ToName = receiver.Name;
 	
 	
@@ -710,6 +717,7 @@ func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string
 	err = json.Unmarshal(rfidBytes, &sender)
 	sender.Balance   = sender.Balance  - tx.Amount
 	sender.Modified = currentDateStr
+	sender.NumTxs = sender.NumTxs + 1
 	tx.FromName = sender.Name;
 	
 	//Commit Sender to ledger
