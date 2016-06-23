@@ -22,15 +22,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"time"
 	"strconv"
-	"github.com/openblockchain/obc-peer/openchain/chaincode/shim"
+
+	"github.com/hyperledger/fabric/core/chaincode/shim"
 )
 
-const   BANKA = "BANKA"
-const   BANKB = "BANKB"
-const   BANKC = "BANKC"
-const 	AUDITOR = "AUDITOR"
+const BANKA = "BANKA"
+const BANKB = "BANKB"
+const BANKC = "BANKC"
+const AUDITOR = "AUDITOR"
 
 const AUDUSD = 0.74
 const USDAUD = 1.34
@@ -38,282 +38,142 @@ const EURUSD = 1.10
 const USDEUR = 0.90
 const AUDEUR = 0.67
 const EURAUD = 1.48
-const TESTCONV= 1.13
-const NUM_TX_TO_RETURN = 27
-
-const DOUBLE_CONTRACT   = "C289416"
-const FEEDBACK_CONTRACT = "C791594"
 
 // SimpleChaincode example simple Chaincode implementation
 type SimpleChaincode struct {
 }
 
-
-
-// Blockchain point transaction records
-type Transaction struct {
-	RefNumber   string   `json:"RefNumber"`
-	Date 		time.Time   `json:"Date"`
-	Description string   `json:"description"`
-	Type 		string   `json:"Type"`
-	Amount    	float64  `json:"Amount"`
-	Money    	float64  `json:"Money"`
-	Activities  int      `json:"FeedbackActivitiesDone"`
-	To			string   `json:"ToUserid"`
-	From		string   `json:"FromUserid"`
-	ToName	    string   `json:"ToName"`
-	FromName	string   `json:"FromName"`
-	ContractId	string   `json:"ContractId"`
-	StatusCode	int 	 `json:"StatusCode"`
-	StatusMsg	string   `json:"StatusMsg"`
-}
-
-
-// Smart contract metadata record
-type Contract struct {
-	Id			string   `json:"ID"`
-	BusinessId  string   `json:"BusinessId"`
-	BusinessName string   `json:"BusinessName"`
-	Title		string   `json:"Title"`
-	Description string   `json:"Description"`
-	Conditions  []string `json:"Conditions"`
-	Icon        string 	 `json:"Icon"`
-	StartDate   time.Time   `json:"StartDate"`
-	EndDate		time.Time   `json:"EndDate"`
-	Method	    string   `json:"Method"`
-}
-
-
-
-// Open Points Network member record
-type User struct {
-	UserId		string   `json:"UserId"`
-	Name   		string   `json:"Name"`
-	Balance 	float64  `json:"Balance"`
-	NumTxs 	    int      `json:"NumberOfTransactions"`
-	Status      string 	 `json:"Status"`
-	Expiration  string   `json:"ExpirationDate"`
-	Join		string   `json:"JoinDate"`
-	Modified	string   `json:"LastModifiedDate"`
-}
-
-
-// Array for storing all open points transactions
-type AllTransactions struct{
-	Transactions []Transaction `json:"transactions"`
-}
-
-
-// Old structs from NV demo - to be deleted 
-type NVAccounts struct {
-	User 		[]User `json:"user"`
-	Vostro 		[]FinancialInst `json:"vostro"`
-}
-
-
 type Account struct {
-	Holder    	string  `json:"holder"`
-	Currency  	string  `json:"currency"`
+	Holder      string  `json:"holder"`
+	Currency    string  `json:"currency"`
 	CashBalance float64 `json:"cashBalance"`
 }
 
 type FinancialInst struct {
-	Owner     	string  `json:"owner"`
+	Owner    string    `json:"owner"`
 	Accounts []Account `json:"accounts"`
 }
 
+type Transaction struct {
+	RefNumber  string  `json:"refNumber"`
+	OpCode     string  `json:"opCode"`
+	VDate      string  `json:"vDate"`
+	Currency   string  `json:"currency"`
+	Amount     float64 `json:"amount"`
+	Sender     string  `json:"sender"`
+	Receiver   string  `json:"receiver"`
+	OrdCust    string  `json:"ordcust"`
+	BenefCust  string  `json:"benefcust"`
+	DetCharges string  `json:"detcharges"`
+	StatusCode int     `json:"statusCode"`
+	StatusMsg  string  `json:"statusMsg"`
+}
+
+type AllTransactions struct {
+	Transactions []Transaction `json:"transactions"`
+}
+
+type NVAccounts struct {
+	Nostro []FinancialInst `json:"nostro"`
+	Vostro []FinancialInst `json:"vostro"`
+}
+
 // ============================================================================================================================
-// Init - initiate data structures and blockchain
+// Init
 // ============================================================================================================================
-func (t *SimpleChaincode) init(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
 	var err error
-	
-	// Create the 'Bank' user and add it to the blockchain
-	var bank User
-	bank.UserId = "B1928564";
-	bank.Name = "OpenFN"
-	bank.Balance = 1000000
-	bank.Status  = "Originator"
-	bank.Expiration = "2099-12-31"
-	bank.Join  = "2015-01-01"
-	bank.Modified = "2016-05-06"
-	bank.NumTxs  = 0
-	
-	
-	jsonAsBytes, _ := json.Marshal(bank)
-	err = stub.PutState(bank.UserId, jsonAsBytes)								
+
+	//BANK A
+	var fid FinancialInst
+	fid.Owner = BANKA
+
+	var actAB Account
+	actAB.Holder = BANKB
+	actAB.Currency = "USD"
+	actAB.CashBalance = 250000.00
+	fid.Accounts = append(fid.Accounts, actAB)
+	var actAC Account
+	actAC.Holder = BANKC
+	actAC.Currency = "USD"
+	actAC.CashBalance = 360000.00
+	fid.Accounts = append(fid.Accounts, actAC)
+
+	jsonAsBytes, _ := json.Marshal(fid)
+	err = stub.PutState("BANKA", jsonAsBytes)
 	if err != nil {
-		fmt.Println("Error Creating Bank user account")
+		fmt.Println("Error creating account " + BANKA)
 		return nil, err
 	}
-	
-	
-    // Create the 'Travel Agency' user and add it to the blockchain
-	var travel User
-	travel.UserId = "T5940872";
-	travel.Name = "Open Travel"
-	travel.Balance = 500000
-	travel.Status  = "Member"
-	travel.Expiration = "2099-12-31"
-	travel.Join  = "2015-01-01"
-	travel.Modified = "2016-05-06"
-	travel.NumTxs  = 0
-	
-	jsonAsBytes, _ = json.Marshal(travel)
-	err = stub.PutState(travel.UserId, jsonAsBytes)								
+
+	// BANK B
+	var fid2 FinancialInst
+	fid2.Owner = BANKB
+
+	var actBA Account
+	actBA.Holder = BANKA
+	actBA.Currency = "AUD"
+	actBA.CashBalance = actAB.CashBalance * USDAUD
+	fid2.Accounts = append(fid2.Accounts, actBA)
+	var actBC Account
+	actBC.Holder = BANKC
+	actBC.Currency = "AUD"
+	actBC.CashBalance = 120000.00
+	fid2.Accounts = append(fid2.Accounts, actBC)
+
+	jsonAsBytes, _ = json.Marshal(fid2)
+	err = stub.PutState("BANKB", jsonAsBytes)
 	if err != nil {
-		fmt.Println("Error Creating Travel user account")
+		fmt.Println("Error creating account " + BANKB)
 		return nil, err
 	}
-	
-	
-	// Create the 'Natalie' user and add her to the blockchain
-	var natalie User
-	natalie.UserId = "U2974034";
-	natalie.Name = "Natalie"
-	natalie.Balance = 1000
-	natalie.Status  = "Platinum"
-	natalie.Expiration = "2017-06-01"
-	natalie.Join  = "2015-05-31"
-	natalie.Modified = "2016-05-06"
-	natalie.NumTxs  = 0
-	
-	jsonAsBytes, _ = json.Marshal(natalie)
-	err = stub.PutState(natalie.UserId, jsonAsBytes)								
+
+	// BANK C
+	var fid3 FinancialInst
+	fid3.Owner = BANKC
+
+	var actCA Account
+	actCA.Holder = BANKA
+	actCA.Currency = "EUR"
+	actCA.CashBalance = actAC.CashBalance * USDEUR
+	fid3.Accounts = append(fid3.Accounts, actCA)
+	var actCB Account
+	actCB.Holder = BANKB
+	actCB.Currency = "EUR"
+	actCB.CashBalance = actBC.CashBalance * AUDEUR
+	fid3.Accounts = append(fid3.Accounts, actCB)
+
+	jsonAsBytes, _ = json.Marshal(fid3)
+	err = stub.PutState("BANKC", jsonAsBytes)
 	if err != nil {
-		fmt.Println("Error Creating Natalie user account")
+		fmt.Println("Error creating account " + BANKC)
 		return nil, err
 	}
-	
-	
-	// Create the 'Anthony' user and add him to the blockchain
-	var anthony User
-	anthony.UserId = "U3151672";
-	anthony.Name = "Anthony"
-	anthony.Balance = 500
-	anthony.Status  = "Silver"
-	anthony.Expiration = "2017-03-15"
-	anthony.Join  = "2015-08-15"
-	anthony.Modified = "2016-04-17"
-	anthony.NumTxs  = 0
-	
-	jsonAsBytes, _ = json.Marshal(anthony)
-	err = stub.PutState(anthony.UserId, jsonAsBytes)								
-	if err != nil {
-		fmt.Println("Error Creating Anthony user account")
-		return nil, err
-	}
-	
-	
-	// Create an array for storing all transactions, and store the array on the blockchain
+
 	var transactions AllTransactions
 	jsonAsBytes, _ = json.Marshal(transactions)
 	err = stub.PutState("allTx", jsonAsBytes)
 	if err != nil {
 		return nil, err
 	}
-	
-	// Create transaction reference number and store it on the blockchain
-	var refNumber int
-	
-	refNumber = 2985674978
-	jsonAsBytes, _ = json.Marshal(refNumber)
-	err = stub.PutState("refNumber", jsonAsBytes)								
-	if err != nil {
-		fmt.Println("Error Creating reference number")
-		return nil, err
-	}
 
-	
-	// Create contract metadata for double points and add it to the blockchain
-	var double Contract
-	double.Id = DOUBLE_CONTRACT
-	double.BusinessId  = "B1928564"
-	double.BusinessName = "OpenFN"
-	double.Title = "Double Points using OpenFN OpenPay"
-	double.Description = "Earn double points on dining and selected travel activities using OpenFN OpenPay"
-	double.Conditions = append(double.Conditions, "2x points for dinning and travel activities")
-	double.Conditions = append(double.Conditions, "Valid from May 11, 2016") 
-	double.Icon = ""
-	double.Method = "doubleContract"
-	
-	startDate, _  := time.Parse(time.RFC822, "11 May 16 12:00 UTC")
-	double.StartDate = startDate
-	endDate, _  := time.Parse(time.RFC822, "31 Dec 60 11:59 UTC")
-	double.EndDate = endDate
-	
-	jsonAsBytes, _ = json.Marshal(double)
-	err = stub.PutState(DOUBLE_CONTRACT, jsonAsBytes)								
-	if err != nil {
-		fmt.Println("Error creating double contract")
-		return nil, err
-	}
-	
-	
-	// Create contract metadata for feedback points and add it to the blockchain
-    var feedback Contract
-	feedback.Id = FEEDBACK_CONTRACT
-	feedback.BusinessId  = "T5940872"
-	feedback.BusinessName = "Open Travel"
-	feedback.Title = "Points for Feedback by Open Travel"
-	feedback.Description = "Earn points by sharing your thoughts on travel package and activities"
-	feedback.Conditions = append(feedback.Conditions, "1,000 points for travel package ")
-	feedback.Conditions = append(feedback.Conditions, "100 points for each travel activity")
-	feedback.Conditions = append(feedback.Conditions, "Valid from May 24, 2016")
-	feedback.Icon = ""
-	feedback.Method = "feedbackContract"
-	startDate, _  = time.Parse(time.RFC822, "24 May 16 12:00 UTC")
-	feedback.StartDate = startDate
-	endDate, _  = time.Parse(time.RFC822, "31 Dec 60 11:59 UTC")
-	feedback.EndDate = endDate
-	
-	jsonAsBytes, _ = json.Marshal(feedback)
-	err = stub.PutState(FEEDBACK_CONTRACT, jsonAsBytes)								
-	if err != nil {
-		fmt.Println("Error creating feedback contract")
-		return nil, err
-	}
-
-	
-	// Create an array of contract ids to keep track of all contracts
-	var contractIds []string
-	contractIds = append(contractIds, DOUBLE_CONTRACT);
-	contractIds = append(contractIds, FEEDBACK_CONTRACT);
-	
-	jsonAsBytes, _ = json.Marshal(contractIds)
-	err = stub.PutState("contractIds", jsonAsBytes)								
-	if err != nil {
-		fmt.Println("Error storing contract Ids on blockchain")
-		return nil, err
-	}
-
-	
 	return nil, nil
 }
 
-
-
 // ============================================================================================================================
 // Run - Our entry point
-// Function names called from Node JS must be added here in order to be callable
 // ============================================================================================================================
 func (t *SimpleChaincode) Run(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 	fmt.Println("run is running " + function)
 
 	// Handle different functions
-	if function == "init" {													//initialize the chaincode state
-		return t.init(stub, args)
-	} else if function == "submitTx" {											//create a transaction
-		return t.submitTx(stub, args) 
-	} else if function == "updateUserAccount" {											//create a transaction
-		return t.updateUserAccount(stub, args) 
-	} else if function == "transferPoints" {											//create a transaction
-		return t.transferPoints(stub, args)
-	} 
-	
-	
-	fmt.Println("run did not find func: " + function)						//error
+	if function == "init" { //initialize the chaincode state
+		return t.Init(stub, "init", args)
+	} else if function == "submitTx" { //create a transaction
+		return t.submitTx(stub, args)
+	}
+	fmt.Println("run did not find func: " + function) //error
 
 	return nil, errors.New("Received unknown function invocation")
 }
@@ -323,31 +183,34 @@ func (t *SimpleChaincode) Run(stub *shim.ChaincodeStub, function string, args []
 // ============================================================================================================================
 func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
-	if len(args) != 2 { return nil, errors.New("Incorrect number of arguments passed") }
+	if len(args) != 2 {
+		return nil, errors.New("Incorrect number of arguments passed")
+	}
 
-	if args[0] != "getFIDetails" && args[0] != "getTxs" && args[0] != "getNVAccounts"&& args[0] != "getUserAccount"  && args[0] != "getContractDetails"  && args[0] != "getAllContracts"{
+	if args[0] != "getFIDetails" && args[0] != "getTxs" && args[0] != "getNVAccounts" {
 		return nil, errors.New("Invalid query function name.")
 	}
 
-	if args[0] == "getFIDetails" { return t.getFinInstDetails(stub, args[1]) }
-	if args[0] == "getNVAccounts" { return t.getNVAccounts(stub, args[1]) }
-	if args[0] == "getTxs" { return t.getTxs(stub, args[1]) }
-	if args[0] == "getUserAccount" { return t.getUserAccount(stub, args[1]) }
-	if args[0] == "getContractDetails" { return t.getContractDetails(stub, args[1]) }
-	if args[0] == "getAllContracts" { return t.getAllContracts(stub) }
-	
+	if args[0] == "getFIDetails" {
+		return t.getFinInstDetails(stub, args[1])
+	}
+	if args[0] == "getNVAccounts" {
+		return t.getNVAccounts(stub, args[1])
+	}
+	if args[0] == "getTxs" {
+		return t.getTxs(stub, args[1])
+	}
 
-	return nil, nil										
+	return nil, nil
 }
 
+// ============================================================================================================================
+// Get Financial Institution Details
+// ============================================================================================================================
+func (t *SimpleChaincode) getFinInstDetails(stub *shim.ChaincodeStub, finInst string) ([]byte, error) {
 
-// ============================================================================================================================
-// Get Financial Institution Details - TO BE DELETED
-// ============================================================================================================================
-func (t *SimpleChaincode) getFinInstDetails(stub *shim.ChaincodeStub, finInst string)([]byte, error){
-	
 	fmt.Println("Start find getFinInstDetails")
-	fmt.Println("Looking for " + finInst);
+	fmt.Println("Looking for " + finInst)
 
 	//get the finInst index
 	fdAsBytes, err := stub.GetState(finInst)
@@ -356,75 +219,63 @@ func (t *SimpleChaincode) getFinInstDetails(stub *shim.ChaincodeStub, finInst st
 	}
 
 	return fdAsBytes, nil
-	
+
 }
 
 // ============================================================================================================================
-// Get Nostro/Vostro accounts for a specific Financial Institution - TO BE DELETED
+// Get Nostro/Vostro accounts for a specific Financial Institution
 // ============================================================================================================================
-func (t *SimpleChaincode) getNVAccounts(stub *shim.ChaincodeStub, finInst string)([]byte, error){
-	
+func (t *SimpleChaincode) getNVAccounts(stub *shim.ChaincodeStub, finInst string) ([]byte, error) {
+
 	fmt.Println("Start find getNVAccounts")
-	fmt.Println("Looking for " + finInst);
-	
-	
-	//get the User index
-	fdAsBytes, err := stub.GetState("1")
+	fmt.Println("Looking for " + finInst)
+
+	//get the finInst index
+	fdAsBytes, err := stub.GetState(finInst)
 	if err != nil {
 		return nil, errors.New("Failed to get Financial Institution")
 	}
 
-	var fd User
+	var fd FinancialInst
 	json.Unmarshal(fdAsBytes, &fd)
 
 	var res NVAccounts
-	res.User = append(res.User, fd)
-	
-	
-	//get the finInst index
-	fdAsBytes, err = stub.GetState("BANKA")
-	if err != nil {
-		return nil, errors.New("Failed to get Financial Institution")
+	res.Vostro = append(res.Vostro, fd)
+
+	for i := range fd.Accounts {
+
+		fdrAsBytes, err := stub.GetState(fd.Accounts[i].Holder)
+		if err != nil {
+			return nil, errors.New("Failed to get Financial Institution")
+		}
+		var fdr FinancialInst
+		json.Unmarshal(fdrAsBytes, &fdr)
+
+		for x := range fdr.Accounts {
+			if fdr.Accounts[x].Holder == finInst {
+				var nfd FinancialInst
+				nfd.Owner = fdr.Owner
+				nfd.Accounts = append(nfd.Accounts, fdr.Accounts[x])
+				res.Nostro = append(res.Nostro, nfd)
+			}
+		}
 	}
-
-	var fin FinancialInst
-	json.Unmarshal(fdAsBytes, &fin)
-
-	res.Vostro = append(res.Vostro, fin)
 
 	resAsBytes, _ := json.Marshal(res)
 
 	return resAsBytes, nil
-	
+
 }
 
 // ============================================================================================================================
-// Get Open Points member account from the blockchain
+// Get Transactions for a specific Financial Institution (Inbound and Outbound)
 // ============================================================================================================================
-func (t *SimpleChaincode) getUserAccount(stub *shim.ChaincodeStub, userId string)([]byte, error){
-	
-	fmt.Println("Start getUserAccount")
-	fmt.Println("Looking for user with ID " + userId);
+func (t *SimpleChaincode) getTxs(stub *shim.ChaincodeStub, finInst string) ([]byte, error) {
 
-	//get the User index
-	fdAsBytes, err := stub.GetState(userId)
-	if err != nil {
-		return nil, errors.New("Failed to get user account from blockchain")
-	}
-
-	return fdAsBytes, nil
-	
-}
-
-// ============================================================================================================================
-// Get all transactions that involve a particular user
-// ============================================================================================================================
-func (t *SimpleChaincode) getTxs(stub *shim.ChaincodeStub, userId string)([]byte, error){
-	
 	var res AllTransactions
 
 	fmt.Println("Start find getTransactions")
-	fmt.Println("Looking for " + userId);
+	fmt.Println("Looking for " + finInst)
 
 	//get the AllTransactions index
 	allTxAsBytes, err := stub.GetState("allTx")
@@ -434,361 +285,176 @@ func (t *SimpleChaincode) getTxs(stub *shim.ChaincodeStub, userId string)([]byte
 
 	var txs AllTransactions
 	json.Unmarshal(allTxAsBytes, &txs)
-	numTxs := len(txs.Transactions)
-	//numToReturn := int(math.Min(float64(numTxs), float64(NUM_TX_TO_RETURN)))
-	for i := numTxs -1; i >= 0; i-- {
-	    if txs.Transactions[i].From == userId{
+
+	for i := range txs.Transactions {
+
+		if txs.Transactions[i].Sender == finInst {
 			res.Transactions = append(res.Transactions, txs.Transactions[i])
 		}
 
-		if txs.Transactions[i].To == userId{
+		if txs.Transactions[i].Receiver == finInst {
 			res.Transactions = append(res.Transactions, txs.Transactions[i])
 		}
-		
-		if (len(res.Transactions) >= NUM_TX_TO_RETURN) { break }
+
+		if finInst == AUDITOR {
+			res.Transactions = append(res.Transactions, txs.Transactions[i])
+		}
 	}
 
 	resAsBytes, _ := json.Marshal(res)
 
 	return resAsBytes, nil
-	
+
 }
 
-
-
 // ============================================================================================================================
-// Submit Transaction - TO BE DELETED
+// Submit Transaction
+// RefNumber   string   `json:"refNumber"`
+// OpCode 		string   `json:"opCode"`
+// VDate 		string   `json:"vDate"`
+// Currency  	string   `json:"currency"`
+// Amount    	float64  `json:"amount"`
+// Sender		string   `json:"sender"`
+// Receiver	string   `json:"receiver"`
+// OrdCust		string   `json:"ordcust"`
+// BenefCust	string   `json:"benefcust"`
+// DetCharges  string   `json:"detcharges"`
 // ============================================================================================================================
 func (t *SimpleChaincode) submitTx(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 
+	var err error
 	fmt.Println("Running submitTx")
-	
-	
+
+	if len(args) != 10 {
+		fmt.Println("Incorrect number of arguments. Expecting 10 - MT103 format")
+		return nil, errors.New("Incorrect number of arguments. Expecting 10 - MT103 format")
+	}
+
 	var tx Transaction
-	tx.RefNumber 	= args[0]
-	startDate, _  := time.Parse(time.RFC822, args[1])
-	tx.Date 		= startDate
-	tx.Description 	= args[2]
-	tx.Type 	    = args[3]
-	tx.To 			= args[5]
-	tx.From 		= args[6]
-	tx.ContractId 	= args[7]
-	tx.StatusCode 	= 1
-	tx.StatusMsg 	= "Transaction Completed"
-	
-	
+	tx.RefNumber = args[0]
+	tx.OpCode = args[1]
+	tx.VDate = args[2]
+	tx.Currency = args[3]
+	tx.Sender = args[5]
+	tx.Receiver = args[6]
+	tx.OrdCust = args[7]
+	tx.BenefCust = args[8]
+	tx.DetCharges = args[9]
+	tx.StatusCode = 1
+	tx.StatusMsg = "Transaction Completed"
+
 	amountValue, err := strconv.ParseFloat(args[4], 64)
 	if err != nil {
 		tx.StatusCode = 0
 		tx.StatusMsg = "Invalid Amount"
-	}else{
+	} else {
 		tx.Amount = amountValue
 	}
-	
-	
-	//***************************************************************
-	// Get Receiver account from BC
-	rfidBytes, err := stub.GetState(tx.To)
-	if err != nil {
-		return nil, errors.New("SubmitTx Failed to get User from BC")
-	}
-	var receiver User
-	fmt.Println("SubmitTx Unmarshalling User Struct");
-	err = json.Unmarshal(rfidBytes, &receiver)
-	receiver.Balance = receiver.Balance  + tx.Amount
-	
-	
-	//Commit Receiver to ledger
-	fmt.Println("SubmitTx Commit Updated Sender To Ledger");
-	txsAsBytes, _ := json.Marshal(receiver)
-	err = stub.PutState(tx.To, txsAsBytes)	
-	if err != nil {
-		return nil, err
-	}
-	
-	// Get Sender account from BC
-	rfidBytes, err = stub.GetState(tx.From)
+
+	// Check Nostro Account
+	rfidBytes, err := stub.GetState(tx.Receiver)
 	if err != nil {
 		return nil, errors.New("SubmitTx Failed to get Financial Institution")
 	}
-	var sender FinancialInst
-	fmt.Println("SubmitTx Unmarshalling Financial Institution");
-	err = json.Unmarshal(rfidBytes, &sender)
-	sender.Accounts[0].CashBalance   = sender.Accounts[0].CashBalance  - tx.Amount
-	
-	//Commit Sender to ledger
-	fmt.Println("SubmitTx Commit Updated Sender To Ledger");
-	txsAsBytes, _ = json.Marshal(sender)
-	err = stub.PutState(tx.From, txsAsBytes)	
-	if err != nil {
-		return nil, err
-	}
-	
-	
-	return nil, nil
-	//***********************************************************************
-}
+	var rfid FinancialInst
+	fmt.Println("SubmitTx Unmarshalling Financial Institution")
+	err = json.Unmarshal(rfidBytes, &rfid)
 
+	found := false
+	amountSent := 0.0
+	for i := range rfid.Accounts {
 
-// ============================================================================================================================
-// Get the contract metadata of a single smart contract from the blockchain
-// ============================================================================================================================
-func (t *SimpleChaincode) getContractDetails(stub *shim.ChaincodeStub, contractId string)([]byte, error)  {
+		if rfid.Accounts[i].Holder == tx.Sender {
+			fmt.Println("SubmitTx Find Sender Nostro Account")
+			found = true
+			fxRate, err := getFXRate(tx.Currency, rfid.Accounts[i].Currency)
+			fmt.Println("SubmitTx Get FX Rate " + FloatToString(fxRate))
+			//Transaction currency invalid
+			if err != nil {
+				tx.StatusCode = 0
+				tx.StatusMsg = "Invalid Currency"
+				break
+			}
 
-	contractAsBytes, _ := stub.GetState(contractId)
-
-
-	return contractAsBytes, nil
-
-}
-
-// ============================================================================================================================
-// Get the contract metadata of all contracts from the blockchain
-// ============================================================================================================================
-func (t *SimpleChaincode) getAllContracts(stub *shim.ChaincodeStub)([]byte, error)  {
-
-	contractIdsAsBytes, _ := stub.GetState("contractIds")
-	var contractIds []string
-	json.Unmarshal(contractIdsAsBytes, &contractIds)
-	
-	var allContracts []Contract
-	for i := range contractIds{
-		contractAsBytes, _ := stub.GetState(contractIds[i])
-		var thisContract Contract
-		json.Unmarshal(contractAsBytes, &thisContract)
-		allContracts = append(allContracts, thisContract)
+			amountSent = tx.Amount * fxRate
+			fmt.Println("SubmitTx Amount To Send " + FloatToString(amountSent))
+			if rfid.Accounts[i].CashBalance-amountSent < 0 {
+				tx.StatusCode = 0
+				tx.StatusMsg = "Insufficient funds on Nostro Account"
+				break
+			}
+		}
 	}
 
-	asBytes, _ := json.Marshal(allContracts)
-	return asBytes, nil
-
-}
-
-// ============================================================================================================================
-// Smart contract for giving user double points
-// ============================================================================================================================
-func doubleContract(tx Transaction, stub *shim.ChaincodeStub) float64 {
-
-
-	contractAsBytes, err := stub.GetState(DOUBLE_CONTRACT)
-	if err != nil {
-		return -99
-	}
-	var contract Contract
-	json.Unmarshal(contractAsBytes, &contract)
-	
-	var pointsToTransfer float64
-	pointsToTransfer = tx.Amount
-	if (tx.Date.After(contract.StartDate) && tx.Date.Before(contract.EndDate)) {
-	     pointsToTransfer = pointsToTransfer * 2
-	}
- 
- 
-  return pointsToTransfer
-  
-  
-}
-
-
-// ============================================================================================================================
-// Smart contract for giving user points for completing feedback surveys
-// ============================================================================================================================
-func feedbackContract(tx Transaction, stub *shim.ChaincodeStub) float64 {
-  
-
-	contractAsBytes, err := stub.GetState(FEEDBACK_CONTRACT)
-	if err != nil {
-		return -99
-	}
-	var contract Contract
-	json.Unmarshal(contractAsBytes, &contract)
-	
-	var pointsToTransfer float64
-	pointsToTransfer = 0
-	if (tx.Date.After(contract.StartDate) && tx.Date.Before(contract.EndDate)) {
-	     pointsToTransfer = 1000
-		 
-		 if (tx.Activities > 0) {
-			pointsToTransfer = pointsToTransfer + float64(tx.Activities)*100
-		 }
-	}
-  
-  
-  return pointsToTransfer
-  
-  
-}
-
-// ============================================================================================================================
-// Transfer points between members of the Open Points Network
-// ============================================================================================================================
-func (t *SimpleChaincode) transferPoints(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
-
-	fmt.Println("Running transferPoints")
-	currentDateStr := time.Now().Format(time.RFC822)
-	startDate, _  := time.Parse(time.RFC822, currentDateStr)
-
-	
-	var tx Transaction
-	tx.Date 		= startDate
-	tx.To 			= args[0]
-	tx.From 		= args[1]
-	tx.Type 	    = args[2]
-	tx.Description 	= args[3]
-	tx.ContractId 	= args[4]
-	activities, _  := strconv.Atoi(args[5])
-	tx.Activities   = activities
-	tx.StatusCode 	= 1
-	tx.StatusMsg 	= "Transaction Completed"
-	
-	
-	amountValue, err := strconv.ParseFloat(args[6], 64)
-	if err != nil {
+	if !found {
 		tx.StatusCode = 0
-		tx.StatusMsg = "Invalid Amount"
-	}else{
-		tx.Amount = amountValue
+		tx.StatusMsg = "Nostro Account for " + tx.Sender + " doesn't exist in " + tx.Receiver
 	}
-	
-	moneyValue, err := strconv.ParseFloat(args[7], 64)
-	if err != nil {
-		tx.StatusCode = 0
-		tx.StatusMsg = "Invalid Amount"
-	}else{
-		tx.Money = moneyValue
-	}
-	
-	
-	// Get the current reference number and update it
-	var refNumber int
-	refNumberBytes, numErr := stub.GetState("refNumber")
-	if numErr != nil {
-		fmt.Println("Error Getting  ref number for transferring points")
-		return nil, err
-	}
-	
-	json.Unmarshal(refNumberBytes, &refNumber)
-	tx.RefNumber 	= strconv.Itoa(refNumber)
-	refNumber = refNumber + 1;
-	refNumberBytes, _ = json.Marshal(refNumber)
-	err = stub.PutState("refNumber", refNumberBytes)								
-	if err != nil {
-		fmt.Println("Error Creating updating ref number")
-		return nil, err
-	}
-	
-	// Determine point amount to transfer based on contract type
-	if (tx.ContractId == DOUBLE_CONTRACT) {
-		tx.Amount = doubleContract(tx, stub)
-	} else if (tx.ContractId == FEEDBACK_CONTRACT) {
-		tx.Amount = feedbackContract(tx, stub)
-	}
-	
 
-	// Get Receiver account from BC and update point balance
-	rfidBytes, err := stub.GetState(tx.To)
+	//Check Vostro Account
+	sfidBytes, err := stub.GetState(tx.Sender)
 	if err != nil {
-		return nil, errors.New("transferPoints Failed to get Receiver from BC")
+		return nil, errors.New("SubmitTx Failed to get Financial Institution")
 	}
-	var receiver User
-	fmt.Println("transferPoints Unmarshalling User Struct");
-	err = json.Unmarshal(rfidBytes, &receiver)
-	receiver.Balance = receiver.Balance  + tx.Amount
-	receiver.Modified = currentDateStr
-	receiver.NumTxs = receiver.NumTxs + 1
-	tx.ToName = receiver.Name;
-	
-	
-	//Commit Receiver to ledger
-	fmt.Println("transferPoints Commit Updated receiver To Ledger");
-	txsAsBytes, _ := json.Marshal(receiver)
-	err = stub.PutState(tx.To, txsAsBytes)	
-	if err != nil {
-		return nil, err
+	var sfid FinancialInst
+	fmt.Println("SubmitTx Unmarshalling Financial Institution")
+	err = json.Unmarshal(sfidBytes, &sfid)
+
+	found = false
+	for i := range sfid.Accounts {
+
+		if sfid.Accounts[i].Holder == tx.Receiver {
+			fmt.Println("SubmitTx Find Vostro Account")
+			found = true
+
+			if sfid.Accounts[i].Currency != tx.Currency {
+				tx.StatusCode = 0
+				tx.StatusMsg = tx.Receiver + " doesn't have an account in " + tx.Currency + " with " + tx.Sender
+				break
+			}
+		}
 	}
-	
-	// Get Sender account from BC nd update point balance
-	rfidBytes, err = stub.GetState(tx.From)
-	if err != nil {
-		return nil, errors.New("transferPoints Failed to get Financial Institution")
+
+	if !found {
+		tx.StatusCode = 0
+		tx.StatusMsg = "Vostro Account for " + tx.Receiver + " doesn't exist in " + tx.Sender
 	}
-	var sender User
-	fmt.Println("transferPoints Unmarshalling Sender");
-	err = json.Unmarshal(rfidBytes, &sender)
-	sender.Balance   = sender.Balance  - tx.Amount
-	sender.Modified = currentDateStr
-	sender.NumTxs = sender.NumTxs + 1
-	tx.FromName = sender.Name;
-	
-	//Commit Sender to ledger
-	fmt.Println("transferPoints Commit Updated Sender To Ledger");
-	txsAsBytes, _ = json.Marshal(sender)
-	err = stub.PutState(tx.From, txsAsBytes)	
-	if err != nil {
-		return nil, err
+
+	if tx.StatusCode == 1 {
+		//Credit and debit Accounts
+		fmt.Println("SubmitTx Credit Vostro Account")
+		_, err = t.creditVostroAccount(stub, tx.Sender, tx.Receiver, tx.Amount)
+		if err != nil {
+			return nil, errors.New("SubmitTx Failed to Credit Vostro Account")
+		}
+
+		fmt.Println("SubmitTx Debit Nostro Account")
+		_, err = t.debitNostroAccount(stub, tx.Sender, tx.Receiver, amountSent)
+		if err != nil {
+			return nil, errors.New("SubmitTx Failed to Debit Nostro Account")
+		}
 	}
-	
-	
+
 	//get the AllTransactions index
 	allTxAsBytes, err := stub.GetState("allTx")
 	if err != nil {
 		return nil, errors.New("SubmitTx Failed to get all Transactions")
 	}
 
-	//Update transactions arrary and commit to BC
-	fmt.Println("SubmitTx Commit Transaction To Ledger");
+	//Commit transaction to ledger
+	fmt.Println("SubmitTx Commit Transaction To Ledger")
 	var txs AllTransactions
 	json.Unmarshal(allTxAsBytes, &txs)
 	txs.Transactions = append(txs.Transactions, tx)
-	txsAsBytes, _ = json.Marshal(txs)
-	err = stub.PutState("allTx", txsAsBytes)	
-	if err != nil {
-		return nil, err
-	}
-	
-	
-	return nil, nil
-
-}
-
-// ============================================================================================================================
-// Update Open Points memeber point balance
-// ============================================================================================================================
-func (t *SimpleChaincode) updateUserAccount(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
-
-	fmt.Println("Running updateUserAccount")
-
-	userId := args[0]
-	amountValue, err := strconv.ParseFloat(args[1], 64)
-	
-
-	// Get user account from the blockchain
-	rfidBytes, err := stub.GetState(userId)
-	if err != nil {
-		return nil, errors.New("updateUserAccount Failed to get User from BC")
-	}
-	
-	var account User
-	fmt.Println("SubmitTx Unmarshalling User Struct");
-	err = json.Unmarshal(rfidBytes, &account)
-	account.Balance = account.Balance  + amountValue
-	
-	// Commit user account to ledger
-	fmt.Println("SubmitTx Commit Updated user account To Ledger");
-	txsAsBytes, _ := json.Marshal(account)
-	err = stub.PutState(userId, txsAsBytes)	
+	txsAsBytes, _ := json.Marshal(txs)
+	err = stub.PutState("allTx", txsAsBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	
 	return nil, nil
-
 }
 
-// ============================================================================================================================
-// Old Function - TO BE DELETED
-// ============================================================================================================================
 func (t *SimpleChaincode) creditVostroAccount(stub *shim.ChaincodeStub, sender string, receiver string, amount float64) ([]byte, error) {
 
 	senderBytes, err := stub.GetState(sender)
@@ -796,20 +462,20 @@ func (t *SimpleChaincode) creditVostroAccount(stub *shim.ChaincodeStub, sender s
 		return nil, errors.New("Failed to get Financial Institution")
 	}
 	var sfid FinancialInst
-	fmt.Println("CreditVostroAccount Unmarshalling Financial Institution");
+	fmt.Println("CreditVostroAccount Unmarshalling Financial Institution")
 	err = json.Unmarshal(senderBytes, &sfid)
 	if err != nil {
 		return nil, err
 	}
 
-	for i := range sfid.Accounts{
-		if sfid.Accounts[i].Holder == receiver{
+	for i := range sfid.Accounts {
+		if sfid.Accounts[i].Holder == receiver {
 			sfid.Accounts[i].CashBalance = sfid.Accounts[i].CashBalance + amount
 		}
 	}
 
 	sfidAsBytes, _ := json.Marshal(sfid)
-	err = stub.PutState(sender, sfidAsBytes)	
+	err = stub.PutState(sender, sfidAsBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -817,11 +483,7 @@ func (t *SimpleChaincode) creditVostroAccount(stub *shim.ChaincodeStub, sender s
 	return nil, nil
 
 }
- 
- 
-// ============================================================================================================================
-// Old Function - TO BE DELETED
-// ============================================================================================================================
+
 func (t *SimpleChaincode) debitNostroAccount(stub *shim.ChaincodeStub, sender string, receiver string, amount float64) ([]byte, error) {
 
 	receiverBytes, err := stub.GetState(receiver)
@@ -829,20 +491,20 @@ func (t *SimpleChaincode) debitNostroAccount(stub *shim.ChaincodeStub, sender st
 		return nil, errors.New("Failed to get Financial Institution")
 	}
 	var rfid FinancialInst
-	fmt.Println("DebitNostroAccount Unmarshalling Financial Institution");
+	fmt.Println("DebitNostroAccount Unmarshalling Financial Institution")
 	err = json.Unmarshal(receiverBytes, &rfid)
 	if err != nil {
-		return nil, err 
+		return nil, err
 	}
 
-	for i := range rfid.Accounts{
-		if rfid.Accounts[i].Holder == sender{
+	for i := range rfid.Accounts {
+		if rfid.Accounts[i].Holder == sender {
 			rfid.Accounts[i].CashBalance = rfid.Accounts[i].CashBalance - amount
 		}
 	}
 
 	rfidAsBytes, _ := json.Marshal(rfid)
-	err = stub.PutState(receiver, rfidAsBytes)	
+	err = stub.PutState(receiver, rfidAsBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -857,27 +519,63 @@ func main() {
 	}
 }
 
+//  Invoke invoke
+func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
+	fmt.Println("invoke is running " + function)
+	var result []byte
+	var err error
 
-// ============================================================================================================================
-// Old Function - TO BE DELETED
-// ============================================================================================================================
-func getFXRate(curS string, curR string) (float64, error){
-	if(curS == "USD" && curR == "AUD"){ return USDAUD,nil }
-	if(curS == "USD" && curR == "EUR"){ return USDEUR,nil }
-	if(curS == "EUR" && curR == "AUD"){ return EURAUD,nil }
-	if(curS == "EUR" && curR == "USD"){ return EURUSD,nil }
-	if(curS == "AUD" && curR == "EUR"){ return AUDEUR,nil }
-	if(curS == "AUD" && curR == "USD"){ return AUDUSD,nil }
+	// Handle different functions
+	if function == "creditVostroAccount" {
+		amt, err := strconv.ParseFloat(args[2], 64)
+		if err != nil {
+			result, err = t.creditVostroAccount(stub, args[0], args[1], amt)
+		}
+	} else if function == "debitNostroAccount" {
+		amt, err := strconv.ParseFloat(args[2], 64)
+		if err != nil {
+			result, err = t.debitNostroAccount(stub, args[0], args[1], amt)
+		}
+	} else if function == "getFinInstDetails" {
+		result, err = t.getFinInstDetails(stub, args[0])
+	} else if function == "getNVAccounts" {
+		result, err = t.getNVAccounts(stub, args[0])
+	} else if function == "getTxs" {
+		result, err = t.getTxs(stub, args[0])
+	} else if function == "submitTx" {
+		result, err = t.submitTx(stub, args)
+	} else {
+		msg := "invoke did not find func: " + function
+		fmt.Println(msg)
+		err = errors.New(msg)
+		return nil, err
+	}
+	return result, nil
+}
+
+func getFXRate(curS string, curR string) (float64, error) {
+	if curS == "USD" && curR == "AUD" {
+		return USDAUD, nil
+	}
+	if curS == "USD" && curR == "EUR" {
+		return USDEUR, nil
+	}
+	if curS == "EUR" && curR == "AUD" {
+		return EURAUD, nil
+	}
+	if curS == "EUR" && curR == "USD" {
+		return EURUSD, nil
+	}
+	if curS == "AUD" && curR == "EUR" {
+		return AUDEUR, nil
+	}
+	if curS == "AUD" && curR == "USD" {
+		return AUDUSD, nil
+	}
 	return 0.0, errors.New("Not matching Currency")
 }
 
-
-// ============================================================================================================================
-// Old Function - TO BE DELETED
-// ============================================================================================================================
 func FloatToString(input_num float64) string {
-    // to convert a float number to a string
-    return strconv.FormatFloat(input_num, 'f', 4, 64)
+	// to convert a float number to a string
+	return strconv.FormatFloat(input_num, 'f', 4, 64)
 }
-
-
